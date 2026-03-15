@@ -3,7 +3,8 @@ import { authenticate, type AuthContext } from './middleware/auth'
 import { handlePreflight } from './middleware/cors'
 import { json, errorResponse, handleError } from './utils/errors'
 import { handleGetVapidKey, handlePushSubscribe, handleGetNotificationPreferences, handleUpdateNotificationPreferences } from './routes/notifications'
-import { handleGetChannels, handleGetBilling, handleGetAgentProfile, handleDataExport } from './routes/settings'
+import { handleGetChannels, handleGetAgentProfile, handleDataExport } from './routes/settings'
+import { handleCreateCheckout, handleBillingPortal, handleBillingStatus, handleStripeWebhook } from './routes/billing'
 import {
   handleOnboardingDetails, handleOnboardingServices, handleGetServices,
   handleOnboardingPricing, handleVoiceBlobUpload, handleVoiceConfirm,
@@ -36,6 +37,11 @@ export interface Env {
   INTERNAL_SECRET: string
   TWILIO_ACCOUNT_SID: string
   TWILIO_AUTH_TOKEN: string
+  STRIPE_SECRET_KEY: string
+  STRIPE_WEBHOOK_SECRET: string
+  STRIPE_PRICE_SOLO: string
+  STRIPE_PRICE_GROWTH: string
+  FRONTEND_URL: string
 }
 
 type HandlerFn = (
@@ -123,8 +129,14 @@ const routes: Route[] = [
 
   // Settings
   { method: 'GET', pattern: /^\/api\/settings\/channels$/, handler: async (r, e, a) => handleGetChannels(r, e, a) },
-  { method: 'GET', pattern: /^\/api\/settings\/billing$/, handler: async (r, e, a) => handleGetBilling(r, e, a) },
   { method: 'POST', pattern: /^\/api\/settings\/export$/, handler: async (r, e, a) => handleDataExport(r, e, a) },
+
+  // Billing
+  { method: 'POST', pattern: /^\/api\/billing\/create-checkout$/, handler: async (r, e, a) => handleCreateCheckout(r, e, a) },
+  { method: 'POST', pattern: /^\/api\/billing\/portal$/, handler: async (r, e, a) => handleBillingPortal(r, e, a) },
+  { method: 'GET', pattern: /^\/api\/billing\/status$/, handler: async (r, e, a) => handleBillingStatus(r, e, a) },
+  { method: 'POST', pattern: /^\/api\/billing\/webhook$/, public: true,
+    handler: async (r, e) => handleStripeWebhook(r, e) },
 ]
 
 // ===========================================
