@@ -16,7 +16,8 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.1",
     "serve": "^14.2.4",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "ably": "^2.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.5",
