@@ -35,14 +35,16 @@ const pricingSchema = z.object({
   ),
 })
 
-const voiceUploadSchema = z.object({
-  duration_seconds: z.number().min(20).max(180),
-  content_type: z.string().min(1),
-})
-
 const voiceConfirmSchema = z.object({
   r2_key: z.string().min(1),
   duration_seconds: z.number().min(20).max(180),
+})
+
+const verificationSchema = z.object({
+  type: z.enum(['registration', 'insurance']),
+  scheme: z.string().max(50).optional(),
+  reference_number: z.string().max(50).optional(),
+  document_r2_key: z.string().optional(),
 })
 
 // ===========================================
@@ -57,17 +59,22 @@ async function getElectricianId(sql: ReturnType<typeof neon>, clerkId: string): 
   return rows[0].id as string
 }
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 60) || 'electrician'
+}
+
 // ===========================================
 // Handlers
 // ===========================================
 
-/**
- * POST /api/onboarding/details — Save step 2
- */
 export async function handleOnboardingDetails(
-  request: Request,
-  env: Env,
-  auth: AuthContext
+  request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const data = await validateBody(request, detailsSchema)
   const sql = neon(env.NEON_DATABASE_URL)
@@ -100,67 +107,41 @@ export async function handleOnboardingDetails(
   return json({ success: true, id: rows[0].id }, 201, request)
 }
 
-/**
- * POST /api/onboarding/services — Save step 3
- */
 export async function handleOnboardingServices(
-  request: Request,
-  env: Env,
-  auth: AuthContext
+  request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const data = await validateBody(request, servicesSchema)
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
 
   await sql('DELETE FROM services WHERE electrician_id = $1', [electricianId])
-
   for (const category of data.categories) {
-    await sql(
-      'INSERT INTO services (electrician_id, category) VALUES ($1, $2)',
-      [electricianId, category]
-    )
+    await sql('INSERT INTO services (electrician_id, category) VALUES ($1, $2)', [electricianId, category])
   }
-
-  await sql(
-    'UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 4) WHERE id = $1',
-    [electricianId]
-  )
+  await sql('UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 4) WHERE id = $1', [electricianId])
 
   return json({ success: true, count: data.categories.length }, 200, request)
 }
 
-/**
- * GET /api/onboarding/services — Load selected services for pricing step
- */
 export async function handleGetServices(
-  request: Request,
-  env: Env,
-  auth: AuthContext
+  request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
-
   const rows = await sql(
     'SELECT category, price_from, price_to, day_rate, pricing_note FROM services WHERE electrician_id = $1 ORDER BY created_at',
     [electricianId]
   )
-
   return json({ services: rows }, 200, request)
 }
 
-/**
- * POST /api/onboarding/pricing — Save step 4
- */
 export async function handleOnboardingPricing(
-  request: Request,
-  env: Env,
-  auth: AuthContext
+  request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const data = await validateBody(request, pricingSchema)
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
 
-  // Update pricing on existing service records
   for (const p of data.pricing) {
     await sql(
       `UPDATE services SET price_from = $1, price_to = $2, day_rate = $3, pricing_note = $4
@@ -168,70 +149,13 @@ export async function handleOnboardingPricing(
       [p.price_from, p.price_to, p.day_rate, p.pricing_note, electricianId, p.category]
     )
   }
-
-  await sql(
-    'UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 5) WHERE id = $1',
-    [electricianId]
-  )
+  await sql('UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 5) WHERE id = $1', [electricianId])
 
   return json({ success: true }, 200, request)
 }
 
-/**
- * POST /api/onboarding/voice-upload — Generate R2 upload URL for voice recording
- */
-export async function handleVoiceUpload(
-  request: Request,
-  env: Env,
-  auth: AuthContext
-): Promise<Response> {
-  const data = await validateBody(request, voiceUploadSchema)
-  const sql = neon(env.NEON_DATABASE_URL)
-  const electricianId = await getElectricianId(sql, auth.userId)
-
-  const key = `voice/${electricianId}/${Date.now()}.webm`
-
-  // Store directly via R2 binding — we'll return a worker URL for upload
-  // The frontend will POST the blob to our confirm endpoint instead
-  return json({ uploadUrl: 'direct', key }, 200, request)
-}
-
-/**
- * POST /api/onboarding/voice-confirm — Save voice recording metadata after upload
- */
-export async function handleVoiceConfirm(
-  request: Request,
-  env: Env,
-  auth: AuthContext
-): Promise<Response> {
-  const data = await validateBody(request, voiceConfirmSchema)
-  const sql = neon(env.NEON_DATABASE_URL)
-  const electricianId = await getElectricianId(sql, auth.userId)
-
-  // Delete any previous voice recording for this electrician
-  await sql('DELETE FROM voice_recordings WHERE electrician_id = $1', [electricianId])
-
-  await sql(
-    `INSERT INTO voice_recordings (electrician_id, r2_key, duration_seconds, processed)
-     VALUES ($1, $2, $3, false)`,
-    [electricianId, data.r2_key, data.duration_seconds]
-  )
-
-  await sql(
-    'UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 6) WHERE id = $1',
-    [electricianId]
-  )
-
-  return json({ success: true }, 200, request)
-}
-
-/**
- * PUT /api/onboarding/voice-blob — Receive voice blob directly and store in R2
- */
 export async function handleVoiceBlobUpload(
-  request: Request,
-  env: Env,
-  auth: AuthContext
+  request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
@@ -239,18 +163,174 @@ export async function handleVoiceBlobUpload(
   const contentType = request.headers.get('Content-Type') || 'audio/webm'
   const key = `voice/${electricianId}/${Date.now()}.webm`
 
-  // Store blob directly in R2
   const body = await request.arrayBuffer()
-  if (body.byteLength === 0) {
-    throw new AppError('Empty audio file', 400)
-  }
-  if (body.byteLength > 10 * 1024 * 1024) {
-    throw new AppError('File too large (max 10MB)', 400)
-  }
+  if (body.byteLength === 0) throw new AppError('Empty audio file', 400)
+  if (body.byteLength > 10 * 1024 * 1024) throw new AppError('File too large (max 10MB)', 400)
 
-  await env.BUCKET.put(key, body, {
-    httpMetadata: { contentType },
-  })
+  await env.BUCKET.put(key, body, { httpMetadata: { contentType } })
 
   return json({ key }, 200, request)
+}
+
+export async function handleVoiceConfirm(
+  request: Request, env: Env, auth: AuthContext
+): Promise<Response> {
+  const data = await validateBody(request, voiceConfirmSchema)
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  await sql('DELETE FROM voice_recordings WHERE electrician_id = $1', [electricianId])
+  await sql(
+    'INSERT INTO voice_recordings (electrician_id, r2_key, duration_seconds, processed) VALUES ($1, $2, $3, false)',
+    [electricianId, data.r2_key, data.duration_seconds]
+  )
+  await sql('UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 6) WHERE id = $1', [electricianId])
+
+  return json({ success: true }, 200, request)
+}
+
+/**
+ * POST /api/onboarding/verification — Save registration or insurance verification
+ */
+export async function handleVerification(
+  request: Request, env: Env, auth: AuthContext
+): Promise<Response> {
+  const data = await validateBody(request, verificationSchema)
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  // Delete existing verification of same type
+  await sql('DELETE FROM verifications WHERE electrician_id = $1 AND type = $2', [electricianId, data.type])
+
+  if (data.type === 'registration') {
+    await sql(
+      `INSERT INTO verifications (electrician_id, type, scheme, reference_number, status)
+       VALUES ($1, $2, $3, $4, 'pending')`,
+      [electricianId, data.type, data.scheme || null, data.reference_number || null]
+    )
+  } else {
+    await sql(
+      `INSERT INTO verifications (electrician_id, type, document_r2_key, status)
+       VALUES ($1, $2, $3, 'pending')`,
+      [electricianId, data.type, data.document_r2_key || null]
+    )
+  }
+
+  return json({ success: true }, 200, request)
+}
+
+/**
+ * PUT /api/onboarding/insurance-upload — Receive insurance file and store in R2
+ */
+export async function handleInsuranceUpload(
+  request: Request, env: Env, auth: AuthContext
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  const contentType = request.headers.get('Content-Type') || 'application/pdf'
+  const key = `insurance/${electricianId}/${Date.now()}`
+
+  const body = await request.arrayBuffer()
+  if (body.byteLength === 0) throw new AppError('Empty file', 400)
+  if (body.byteLength > 5 * 1024 * 1024) throw new AppError('File too large (max 5MB)', 400)
+
+  await env.BUCKET.put(key, body, { httpMetadata: { contentType } })
+
+  return json({ key }, 200, request)
+}
+
+/**
+ * POST /api/onboarding/verify-complete — Mark verification step as done
+ */
+export async function handleVerifyComplete(
+  request: Request, env: Env, auth: AuthContext
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  await sql('UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 7) WHERE id = $1', [electricianId])
+
+  return json({ success: true }, 200, request)
+}
+
+/**
+ * GET /api/onboarding/go-live — Get data for go-live screen
+ */
+export async function handleGoLiveData(
+  request: Request, env: Env, auth: AuthContext
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const rows = await sql(
+    'SELECT id, first_name, business_name FROM electricians WHERE clerk_id = $1',
+    [auth.userId]
+  )
+  if (rows.length === 0) throw new AppError('Not found', 404)
+
+  const elec = rows[0]
+  const displayName = (elec.business_name as string) || (elec.first_name as string)
+  const slug = generateSlug(displayName)
+
+  // Ensure agent_pages record exists
+  const existing = await sql('SELECT slug FROM agent_pages WHERE electrician_id = $1', [elec.id])
+
+  let finalSlug: string
+  if (existing.length > 0) {
+    finalSlug = existing[0].slug as string
+  } else {
+    // Check slug uniqueness, append number if needed
+    let candidate = slug
+    let counter = 1
+    while (true) {
+      const check = await sql('SELECT id FROM agent_pages WHERE slug = $1', [candidate])
+      if (check.length === 0) break
+      candidate = `${slug}-${counter}`
+      counter++
+    }
+    finalSlug = candidate
+
+    await sql(
+      'INSERT INTO agent_pages (electrician_id, slug, is_active) VALUES ($1, $2, true)',
+      [elec.id, finalSlug]
+    )
+  }
+
+  return json({
+    first_name: elec.first_name,
+    business_name: elec.business_name,
+    slug: finalSlug,
+    agent_page_url: `https://tradgo.co.uk/agent/${finalSlug}`,
+  }, 200, request)
+}
+
+/**
+ * POST /api/onboarding/activate — Set agent live
+ */
+export async function handleActivate(
+  request: Request, env: Env, auth: AuthContext
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  await sql(
+    `UPDATE electricians SET
+      agent_status = 'live',
+      onboarding_completed_at = now()
+    WHERE id = $1`,
+    [electricianId]
+  )
+
+  // Create notification preferences with defaults
+  const existingPrefs = await sql(
+    'SELECT id FROM notification_preferences WHERE electrician_id = $1',
+    [electricianId]
+  )
+  if (existingPrefs.length === 0) {
+    await sql(
+      'INSERT INTO notification_preferences (electrician_id) VALUES ($1)',
+      [electricianId]
+    )
+  }
+
+  return json({ success: true, status: 'live' }, 200, request)
 }
