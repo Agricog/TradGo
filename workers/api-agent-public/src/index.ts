@@ -1,7 +1,9 @@
 import { handleGetPublicProfile } from './handlers/profile'
+import { handleStartConversation, handleSendMessage } from './handlers/conversation'
 
 export interface Env {
   NEON_DATABASE_URL: string
+  ANTHROPIC_API_KEY: string
   ENVIRONMENT: string
   FRONTEND_URL: string
 }
@@ -32,14 +34,11 @@ const rateLimits = new Map<string, { count: number; resetAt: number }>()
 function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
   const now = Date.now()
   const entry = rateLimits.get(key)
-
   if (!entry || now > entry.resetAt) {
     rateLimits.set(key, { count: 1, resetAt: now + windowMs })
     return true
   }
-
   if (entry.count >= maxRequests) return false
-
   entry.count++
   return true
 }
@@ -79,6 +78,18 @@ export default {
       const statusMatch = url.pathname.match(/^\/api\/agent-public\/([a-z0-9-]+)\/status$/)
       if (statusMatch && request.method === 'GET') {
         return handleGetPublicProfile(request, env, statusMatch[1]!)
+      }
+
+      // POST /api/agent-public/:slug/conversation — start new conversation
+      const convoMatch = url.pathname.match(/^\/api\/agent-public\/([a-z0-9-]+)\/conversation$/)
+      if (convoMatch && request.method === 'POST') {
+        return handleStartConversation(request, env, convoMatch[1]!)
+      }
+
+      // POST /api/agent-public/:slug/message — send follow-up message
+      const msgMatch = url.pathname.match(/^\/api\/agent-public\/([a-z0-9-]+)\/message$/)
+      if (msgMatch && request.method === 'POST') {
+        return handleSendMessage(request, env, msgMatch[1]!)
       }
 
       return json({ error: 'Not found' }, 404, request)
