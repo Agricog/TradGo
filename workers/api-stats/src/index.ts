@@ -1,9 +1,12 @@
 import { runLearningAnalysis } from './handlers/learning-analysis'
 import { computeWeeklyStats } from './handlers/stats-computation'
+import { sendDailyDigest } from './handlers/digest-email'
 
 export interface Env {
   NEON_DATABASE_URL: string
   ANTHROPIC_API_KEY: string
+  RESEND_API_KEY: string
+  APP_URL: string
   ENVIRONMENT: string
 }
 
@@ -18,11 +21,9 @@ export default {
   // HTTP handler (health check only)
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
-
     if (url.pathname === '/health') {
       return json({ status: 'ok', service: 'tradgo-api-stats' }, 200)
     }
-
     return json({ error: 'Not found' }, 404)
   },
 
@@ -43,8 +44,10 @@ export default {
       }
 
       if (hour === 7) {
-        // 07:00 UTC — Daily digest emails (built in later batch)
-        console.log('Daily digest job placeholder — will be built in Batch 14')
+        // 07:00 UTC — Daily digest emails
+        console.log('Sending daily digest emails...')
+        await sendDailyDigest(env)
+        console.log('Daily digest complete.')
       }
     } catch (err) {
       console.error('Scheduled job failed:', err)
