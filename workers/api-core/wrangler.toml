@@ -1,0 +1,17 @@
+name = "tradgo-api-core"
+main = "src/index.ts"
+compatibility_date = "2024-09-09"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via `wrangler secret put` or GitHub Actions):
+# NEON_DATABASE_URL
+# CLERK_SECRET_KEY
+# CLERK_PUBLISHABLE_KEY
+# ENCRYPTION_KEY
+
+[r2_buckets]
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "tradgo-uploads"
