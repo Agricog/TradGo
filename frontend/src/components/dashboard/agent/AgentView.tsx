@@ -100,7 +100,7 @@ export default function AgentView() {
 
   const handleDeleteRule = async (id: string) => {
     try {
-      await api.delete(`/api/agent/rules/${id}`)
+      await api.del(`/api/agent/rules/${id}`)
       setRules((prev) => prev.filter((r) => r.id !== id))
     } catch { /* no-op */ }
   }
