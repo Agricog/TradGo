@@ -1,4 +1,3 @@
-
 import { neon } from '@neondatabase/serverless'
 import { authenticate, type AuthContext } from './middleware/auth'
 import { handlePreflight } from './middleware/cors'
@@ -109,6 +108,16 @@ const routes: Route[] = [
 
   // Stats
   { method: 'GET', pattern: /^\/api\/stats\/summary$/, handler: async (r, e, a) => handleStatsSummary(r, e, a) },
+
+  // Notifications
+  { method: 'GET', pattern: /^\/api\/notifications\/vapid-key$/, public: true,
+    handler: async (r, e) => handleGetVapidKey(r, e) },
+  { method: 'POST', pattern: /^\/api\/notifications\/push-subscribe$/,
+    handler: async (r, e, a) => handlePushSubscribe(r, e, a) },
+  { method: 'GET', pattern: /^\/api\/settings\/notifications$/,
+    handler: async (r, e, a) => handleGetNotificationPreferences(r, e, a) },
+  { method: 'PUT', pattern: /^\/api\/settings\/notifications$/,
+    handler: async (r, e, a) => handleUpdateNotificationPreferences(r, e, a) },
 ]
 
 // ===========================================
