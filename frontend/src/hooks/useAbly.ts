@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useAuth, useUser } from '@clerk/clerk-react'
+import { useAuth } from '@clerk/clerk-react'
 import * as Ably from 'ably'
 
 const ABLY_KEY = import.meta.env.VITE_ABLY_PUBLIC_KEY || ''
@@ -25,7 +25,6 @@ interface AblyCallbacks {
  */
 export function useAbly(callbacks: AblyCallbacks) {
   const { userId } = useAuth()
-  const { user } = useUser()
   const clientRef = useRef<Ably.Realtime | null>(null)
   const callbacksRef = useRef(callbacks)
   callbacksRef.current = callbacks
