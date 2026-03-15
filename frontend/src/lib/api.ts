@@ -26,7 +26,7 @@ class ApiClient {
   private async getToken(): Promise<string | null> {
     try {
       // Access Clerk's global instance to get the session token
-      const clerk = (window as Record<string, unknown>).Clerk as {
+      const clerk = (window as unknown as Record<string, unknown>).Clerk as {
         session?: { getToken: () => Promise<string | null> }
       } | undefined
 
