@@ -1,7 +1,11 @@
 import { neon } from '@neondatabase/serverless'
 import { authenticate, type AuthContext } from './middleware/auth'
-import { handlePreflight, corsHeaders } from './middleware/cors'
+import { handlePreflight } from './middleware/cors'
 import { json, errorResponse, handleError } from './utils/errors'
+import {
+  handleOnboardingDetails,
+  handleOnboardingServices,
+} from './routes/onboarding'
 
 // ===========================================
 // Types
@@ -41,6 +45,7 @@ interface Route {
 // ===========================================
 
 const routes: Route[] = [
+  // Health check
   {
     method: 'GET',
     pattern: /^\/health$/,
@@ -49,6 +54,8 @@ const routes: Route[] = [
       return json({ status: 'ok', service: 'tradgo-api-core' }, 200, request)
     },
   },
+
+  // Auth: get current electrician
   {
     method: 'GET',
     pattern: /^\/api\/me$/,
@@ -62,6 +69,24 @@ const routes: Route[] = [
         return json({ exists: false }, 200, request)
       }
       return json({ exists: true, electrician: rows[0] }, 200, request)
+    },
+  },
+
+  // Onboarding: save details (step 2)
+  {
+    method: 'POST',
+    pattern: /^\/api\/onboarding\/details$/,
+    handler: async (request, env, auth) => {
+      return handleOnboardingDetails(request, env, auth)
+    },
+  },
+
+  // Onboarding: save services (step 3)
+  {
+    method: 'POST',
+    pattern: /^\/api\/onboarding\/services$/,
+    handler: async (request, env, auth) => {
+      return handleOnboardingServices(request, env, auth)
     },
   },
 ]
@@ -94,7 +119,6 @@ function matchRoute(
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return handlePreflight(request)
     }
@@ -109,12 +133,10 @@ export default {
     const { route, params } = matched
 
     try {
-      // Public routes skip auth
       if (route.public) {
         return await (route.handler as PublicHandlerFn)(request, env, params)
       }
 
-      // Authenticated routes
       const auth = await authenticate(request, env)
       if (!auth) {
         return errorResponse('Unauthorized', 401, request)
