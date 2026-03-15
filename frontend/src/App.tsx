@@ -24,6 +24,7 @@ import StepGoLive from './components/onboarding/StepGoLive'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import InboxList from './components/dashboard/inbox/InboxList'
 import ConversationDetail from './components/dashboard/inbox/ConversationDetail'
+import StatsView from './components/dashboard/stats/StatsView'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -79,7 +80,7 @@ function PlaceholderTab({ title, description }: { title: string; description: st
 }
 
 function StatsTab() {
-  return <PlaceholderTab title="Stats" description="Performance metrics coming in Batch 14." />
+  return <StatsView />
 }
 
 function AgentTab() {
