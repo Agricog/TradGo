@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import { Zap } from 'lucide-react'
 import StepYou from './components/onboarding/StepYou'
 import StepServices from './components/onboarding/StepServices'
+import StepPricing from './components/onboarding/StepPricing'
+import StepVoice from './components/onboarding/StepVoice'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -66,15 +68,12 @@ function AppShell() {
         if (cancelled) return
         setElectrician(data)
 
-        // Route based on onboarding state
         if (!data.exists) {
           if (!location.pathname.startsWith('/onboarding')) {
             navigate('/onboarding/you', { replace: true })
           }
         } else if (data.electrician) {
-          const step = data.electrician.onboarding_step
           if (data.electrician.agent_status === 'onboarding') {
-            // Send to the right onboarding step
             const stepRoutes: Record<number, string> = {
               1: '/onboarding/you',
               2: '/onboarding/you',
@@ -84,12 +83,11 @@ function AppShell() {
               6: '/onboarding/verify',
               7: '/onboarding/go-live',
             }
-            const target = stepRoutes[step] || '/onboarding/you'
+            const target = stepRoutes[data.electrician.onboarding_step] || '/onboarding/you'
             if (!location.pathname.startsWith('/onboarding')) {
               navigate(target, { replace: true })
             }
           } else {
-            // Onboarding complete — dashboard
             if (location.pathname.startsWith('/onboarding')) {
               navigate('/', { replace: true })
             }
@@ -103,9 +101,7 @@ function AppShell() {
     }
 
     checkUser()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [isLoaded])
 
   if (loading) {
@@ -124,9 +120,8 @@ function AppShell() {
       {/* Onboarding */}
       <Route path="/onboarding/you" element={<StepYou />} />
       <Route path="/onboarding/services" element={<StepServices />} />
-      {/* Steps 4-7 placeholders — built in later batches */}
-      <Route path="/onboarding/pricing" element={<PlaceholderStep step="Pricing" num={4} />} />
-      <Route path="/onboarding/voice" element={<PlaceholderStep step="Voice" num={5} />} />
+      <Route path="/onboarding/pricing" element={<StepPricing />} />
+      <Route path="/onboarding/voice" element={<StepVoice />} />
       <Route path="/onboarding/verify" element={<PlaceholderStep step="Verify" num={6} />} />
       <Route path="/onboarding/go-live" element={<PlaceholderStep step="Go Live" num={7} />} />
 
@@ -141,7 +136,7 @@ function AppShell() {
 }
 
 // ===========================================
-// Placeholder for unbuilt onboarding steps
+// Placeholder for unbuilt steps
 // ===========================================
 
 function PlaceholderStep({ step, num }: { step: string; num: number }) {
@@ -151,19 +146,15 @@ function PlaceholderStep({ step, num }: { step: string; num: number }) {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 mb-4">
           <Zap className="h-8 w-8 text-brand-600" />
         </div>
-        <h1 className="text-xl font-semibold text-surface-900 mb-2">
-          Step {num}: {step}
-        </h1>
-        <p className="text-sm text-surface-700">
-          This step will be built in a later batch.
-        </p>
+        <h1 className="text-xl font-semibold text-surface-900 mb-2">Step {num}: {step}</h1>
+        <p className="text-sm text-surface-700">This step will be built in a later batch.</p>
       </div>
     </div>
   )
 }
 
 // ===========================================
-// Dashboard shell (same as before)
+// Dashboard shell
 // ===========================================
 
 function DashboardShell() {
@@ -175,12 +166,10 @@ function DashboardShell() {
             <Zap className="h-5 w-5 text-brand-600" />
             <span className="font-semibold text-surface-900">TradGo</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-              Agent Live
-            </span>
-          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+            Agent Live
+          </span>
         </div>
       </header>
 
@@ -189,9 +178,7 @@ function DashboardShell() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 mb-4">
             <Zap className="h-8 w-8 text-brand-600" />
           </div>
-          <h1 className="text-xl font-semibold text-surface-900 mb-2">
-            Your agent is live and ready
-          </h1>
+          <h1 className="text-xl font-semibold text-surface-900 mb-2">Your agent is live and ready</h1>
           <p className="text-surface-700 text-sm leading-relaxed">
             When a customer gets in touch, their conversation will appear here.
           </p>
@@ -233,17 +220,8 @@ function TabIcon({ name, className }: { name: string; className?: string }) {
     settings: 'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z',
   }
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
       <path d={paths[name] ?? ''} />
       {name === 'settings' && <circle cx="12" cy="12" r="3" />}
     </svg>
