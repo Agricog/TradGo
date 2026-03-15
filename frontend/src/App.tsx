@@ -6,6 +6,8 @@ import StepYou from './components/onboarding/StepYou'
 import StepServices from './components/onboarding/StepServices'
 import StepPricing from './components/onboarding/StepPricing'
 import StepVoice from './components/onboarding/StepVoice'
+import StepVerify from './components/onboarding/StepVerify'
+import StepGoLive from './components/onboarding/StepGoLive'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -14,10 +16,6 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('VITE_CLERK_PUBLISHABLE_KEY is required')
 }
-
-// ===========================================
-// Auth screen
-// ===========================================
 
 function AuthScreen() {
   return (
@@ -44,10 +42,6 @@ function AuthScreen() {
   )
 }
 
-// ===========================================
-// App shell — checks onboarding state
-// ===========================================
-
 function AppShell() {
   const api = useApi()
   const navigate = useNavigate()
@@ -59,7 +53,6 @@ function AppShell() {
 
   useEffect(() => {
     if (!isLoaded) return
-
     let cancelled = false
 
     async function checkUser() {
@@ -117,45 +110,19 @@ function AppShell() {
 
   return (
     <Routes>
-      {/* Onboarding */}
       <Route path="/onboarding/you" element={<StepYou />} />
       <Route path="/onboarding/services" element={<StepServices />} />
       <Route path="/onboarding/pricing" element={<StepPricing />} />
       <Route path="/onboarding/voice" element={<StepVoice />} />
-      <Route path="/onboarding/verify" element={<PlaceholderStep step="Verify" num={6} />} />
-      <Route path="/onboarding/go-live" element={<PlaceholderStep step="Go Live" num={7} />} />
+      <Route path="/onboarding/verify" element={<StepVerify />} />
+      <Route path="/onboarding/go-live" element={<StepGoLive />} />
 
-      {/* Dashboard */}
       <Route path="/" element={<DashboardShell />} />
       <Route path="/dashboard/*" element={<DashboardShell />} />
-
-      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
-
-// ===========================================
-// Placeholder for unbuilt steps
-// ===========================================
-
-function PlaceholderStep({ step, num }: { step: string; num: number }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-50 px-4">
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 mb-4">
-          <Zap className="h-8 w-8 text-brand-600" />
-        </div>
-        <h1 className="text-xl font-semibold text-surface-900 mb-2">Step {num}: {step}</h1>
-        <p className="text-sm text-surface-700">This step will be built in a later batch.</p>
-      </div>
-    </div>
-  )
-}
-
-// ===========================================
-// Dashboard shell
-// ===========================================
 
 function DashboardShell() {
   return (
@@ -200,12 +167,8 @@ function DashboardShell() {
 function TabItem({ icon, label, active = false }: { icon: string; label: string; active?: boolean }) {
   const colour = active ? 'text-brand-600' : 'text-surface-700'
   return (
-    <button
-      type="button"
-      className={`flex flex-col items-center justify-center gap-0.5 w-16 ${colour}`}
-      aria-label={label}
-      aria-current={active ? 'page' : undefined}
-    >
+    <button type="button" className={`flex flex-col items-center justify-center gap-0.5 w-16 ${colour}`}
+      aria-label={label} aria-current={active ? 'page' : undefined}>
       <TabIcon name={icon} className="h-5 w-5" />
       <span className="text-[10px] font-medium">{label}</span>
     </button>
@@ -227,10 +190,6 @@ function TabIcon({ name, className }: { name: string; className?: string }) {
     </svg>
   )
 }
-
-// ===========================================
-// Root app
-// ===========================================
 
 export default function App() {
   return (
