@@ -27,6 +27,8 @@ export interface Env {
   ENCRYPTION_KEY: string
   ENVIRONMENT: string
   BUCKET: R2Bucket
+  VERIFICATION_WORKER_URL: string
+  INTERNAL_SECRET: string
 }
 
 type HandlerFn = (
