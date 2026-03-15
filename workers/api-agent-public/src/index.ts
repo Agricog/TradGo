@@ -1,5 +1,6 @@
 import { handleGetPublicProfile } from './handlers/profile'
 import { handleStartConversation, handleSendMessage } from './handlers/conversation'
+import { handleOgImage } from './handlers/og-image'
 
 export interface Env {
   NEON_DATABASE_URL: string
@@ -78,6 +79,12 @@ export default {
       const statusMatch = url.pathname.match(/^\/api\/agent-public\/([a-z0-9-]+)\/status$/)
       if (statusMatch && request.method === 'GET') {
         return handleGetPublicProfile(request, env, statusMatch[1]!)
+      }
+
+      // GET /api/agent-public/:slug/og-image
+      const ogMatch = url.pathname.match(/^\/api\/agent-public\/([a-z0-9-]+)\/og-image$/)
+      if (ogMatch && request.method === 'GET') {
+        return handleOgImage(request, env, ogMatch[1]!)
       }
 
       // POST /api/agent-public/:slug/conversation — start new conversation
