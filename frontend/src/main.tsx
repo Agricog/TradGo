@@ -17,7 +17,7 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <Sentry.ErrorBoundary
-      fallback={({ error, resetError }) => (
+      fallback={({ resetError }) => (
         <div className="min-h-screen flex items-center justify-center bg-surface-50 px-4">
           <div className="text-center max-w-md">
             <h1 className="text-xl font-semibold text-surface-900 mb-2">Something went wrong</h1>
