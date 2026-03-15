@@ -25,6 +25,8 @@ import DashboardLayout from './components/dashboard/DashboardLayout'
 import InboxList from './components/dashboard/inbox/InboxList'
 import ConversationDetail from './components/dashboard/inbox/ConversationDetail'
 import StatsView from './components/dashboard/stats/StatsView'
+import AgentView from './components/dashboard/agent/AgentView'
+import SettingsView from './components/dashboard/settings/SettingsView'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -67,28 +69,16 @@ function AuthScreen() {
 // Placeholder screens for unbuilt tabs
 // ===========================================
 
-function PlaceholderTab({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="text-center py-16">
-      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-surface-100 mb-4">
-        <Zap className="h-7 w-7 text-surface-400" />
-      </div>
-      <h2 className="text-lg font-semibold text-surface-900 mb-1">{title}</h2>
-      <p className="text-sm text-surface-600">{description}</p>
-    </div>
-  )
-}
-
 function StatsTab() {
   return <StatsView />
 }
 
 function AgentTab() {
-  return <PlaceholderTab title="Agent" description="Agent management coming in Batch 15." />
+  return <AgentView />
 }
 
 function SettingsTab() {
-  return <PlaceholderTab title="Settings" description="Account settings coming in Batch 15." />
+  return <SettingsView />
 }
 
 // ===========================================
