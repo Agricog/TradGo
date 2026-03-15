@@ -15,6 +15,15 @@ import {
   handleGoLiveData,
   handleActivate,
 } from './routes/onboarding'
+import {
+  handleListConversations,
+  handleGetConversation,
+  handleApprove,
+  handleEdit,
+  handleReject,
+  handleReply,
+  handleComplete,
+} from './routes/conversations'
 
 // ===========================================
 // Types
@@ -29,6 +38,8 @@ export interface Env {
   BUCKET: R2Bucket
   VERIFICATION_WORKER_URL: string
   INTERNAL_SECRET: string
+  TWILIO_ACCOUNT_SID: string
+  TWILIO_AUTH_TOKEN: string
 }
 
 type HandlerFn = (
@@ -56,9 +67,11 @@ interface Route {
 // ===========================================
 
 const routes: Route[] = [
+  // Health
   { method: 'GET', pattern: /^\/health$/, public: true,
     handler: async (request: Request) => json({ status: 'ok', service: 'tradgo-api-core' }, 200, request) },
 
+  // Auth
   { method: 'GET', pattern: /^\/api\/me$/,
     handler: async (request, env, auth) => {
       const sql = neon(env.NEON_DATABASE_URL)
@@ -94,6 +107,22 @@ const routes: Route[] = [
     handler: async (request, env, auth) => handleGoLiveData(request, env, auth) },
   { method: 'POST', pattern: /^\/api\/onboarding\/activate$/,
     handler: async (request, env, auth) => handleActivate(request, env, auth) },
+
+  // Conversations
+  { method: 'GET', pattern: /^\/api\/conversations$/,
+    handler: async (request, env, auth) => handleListConversations(request, env, auth) },
+  { method: 'GET', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)$/,
+    handler: async (request, env, auth, params) => handleGetConversation(request, env, auth, params) },
+  { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/approve$/,
+    handler: async (request, env, auth, params) => handleApprove(request, env, auth, params) },
+  { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/edit$/,
+    handler: async (request, env, auth, params) => handleEdit(request, env, auth, params) },
+  { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/reject$/,
+    handler: async (request, env, auth, params) => handleReject(request, env, auth, params) },
+  { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/reply$/,
+    handler: async (request, env, auth, params) => handleReply(request, env, auth, params) },
+  { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/complete$/,
+    handler: async (request, env, auth, params) => handleComplete(request, env, auth, params) },
 ]
 
 // ===========================================
