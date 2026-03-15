@@ -53,7 +53,7 @@ function AppShell() {
   const { isLoaded } = useAuth()
 
   const [loading, setLoading] = useState(true)
-  const [electrician, setElectrician] = useState<MeResponse | null>(null)
+  const [, setElectrician] = useState<MeResponse | null>(null)
 
   useEffect(() => {
     if (!isLoaded) return
