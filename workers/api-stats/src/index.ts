@@ -1,6 +1,7 @@
 import { runLearningAnalysis } from './handlers/learning-analysis'
 import { computeWeeklyStats } from './handlers/stats-computation'
 import { sendDailyDigest } from './handlers/digest-email'
+import { runDataRetention } from './handlers/data-retention'
 
 export interface Env {
   NEON_DATABASE_URL: string
@@ -30,6 +31,7 @@ export default {
   // Cron trigger handler
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     const hour = new Date(event.scheduledTime).getUTCHours()
+    const dayOfWeek = new Date(event.scheduledTime).getUTCDay() // 0 = Sunday
 
     try {
       if (hour === 3) {
@@ -41,6 +43,13 @@ export default {
         console.log('Computing weekly stats...')
         await computeWeeklyStats(env)
         console.log('Weekly stats complete.')
+
+        // Run data retention on Sundays only
+        if (dayOfWeek === 0) {
+          console.log('Running weekly data retention...')
+          await runDataRetention(env)
+          console.log('Data retention complete.')
+        }
       }
 
       if (hour === 7) {
