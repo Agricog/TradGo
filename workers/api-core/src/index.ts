@@ -5,6 +5,11 @@ import { json, errorResponse, handleError } from './utils/errors'
 import {
   handleOnboardingDetails,
   handleOnboardingServices,
+  handleGetServices,
+  handleOnboardingPricing,
+  handleVoiceUpload,
+  handleVoiceConfirm,
+  handleVoiceBlobUpload,
 } from './routes/onboarding'
 
 // ===========================================
@@ -76,18 +81,49 @@ const routes: Route[] = [
   {
     method: 'POST',
     pattern: /^\/api\/onboarding\/details$/,
-    handler: async (request, env, auth) => {
-      return handleOnboardingDetails(request, env, auth)
-    },
+    handler: async (request, env, auth) => handleOnboardingDetails(request, env, auth),
   },
 
   // Onboarding: save services (step 3)
   {
     method: 'POST',
     pattern: /^\/api\/onboarding\/services$/,
-    handler: async (request, env, auth) => {
-      return handleOnboardingServices(request, env, auth)
-    },
+    handler: async (request, env, auth) => handleOnboardingServices(request, env, auth),
+  },
+
+  // Onboarding: get services (for pricing step)
+  {
+    method: 'GET',
+    pattern: /^\/api\/onboarding\/services$/,
+    handler: async (request, env, auth) => handleGetServices(request, env, auth),
+  },
+
+  // Onboarding: save pricing (step 4)
+  {
+    method: 'POST',
+    pattern: /^\/api\/onboarding\/pricing$/,
+    handler: async (request, env, auth) => handleOnboardingPricing(request, env, auth),
+  },
+
+  // Onboarding: get voice upload URL (step 5)
+  {
+    method: 'POST',
+    pattern: /^\/api\/onboarding\/voice-upload$/,
+    handler: async (request, env, auth) => handleVoiceUpload(request, env, auth),
+  },
+
+  // Onboarding: upload voice blob directly
+  {
+    method: 'PUT',
+    pattern: /^\/api\/onboarding\/voice-blob$/,
+    handler: async (request, env, auth) => handleVoiceBlobUpload(request, env, auth),
+  },
+
+  // Onboarding: confirm voice recording (step 5)
+  {
+    method: 'POST',
+    pattern: /^\/api\/onboarding\/voice-confirm$/,
+    handler: async (request, env, auth) => handleVoiceConfirm(request, env, auth),
   },
 ]
 
