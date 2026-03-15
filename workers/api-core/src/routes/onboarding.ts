@@ -53,20 +53,57 @@ const verificationSchema = z.object({
 
 async function getElectricianId(sql: ReturnType<typeof neon>, clerkId: string): Promise<string> {
   const rows = await sql('SELECT id FROM electricians WHERE clerk_id = $1', [clerkId])
-  if (rows.length === 0) {
-    throw new AppError('Complete step 2 first', 400, 'STEP_ORDER')
-  }
+  if (rows.length === 0) throw new AppError('Complete step 2 first', 400, 'STEP_ORDER')
   return rows[0].id as string
 }
 
 function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 60) || 'electrician'
+  return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-')
+    .replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 60) || 'electrician'
+}
+
+/**
+ * Fire-and-forget trigger to the verification worker.
+ * Non-blocking — if the worker is down, verification stays as 'pending'.
+ */
+async function triggerVerificationWorker(
+  env: Env,
+  verificationId: string,
+  electricianId: string,
+  type: string,
+  scheme?: string,
+  referenceNumber?: string,
+  documentR2Key?: string
+): Promise<void> {
+  const workerUrl = env.VERIFICATION_WORKER_URL
+  const secret = env.INTERNAL_SECRET
+
+  if (!workerUrl || !secret) {
+    console.warn('Verification worker URL or secret not configured — skipping trigger')
+    return
+  }
+
+  try {
+    // Fire and forget — don't await the full processing
+    await fetch(`${workerUrl}/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${secret}`,
+      },
+      body: JSON.stringify({
+        verification_id: verificationId,
+        electrician_id: electricianId,
+        type,
+        scheme,
+        reference_number: referenceNumber,
+        document_r2_key: documentR2Key,
+      }),
+    })
+  } catch (err) {
+    // Non-blocking — log but don't fail the request
+    console.error('Failed to trigger verification worker:', err)
+  }
 }
 
 // ===========================================
@@ -189,9 +226,6 @@ export async function handleVoiceConfirm(
   return json({ success: true }, 200, request)
 }
 
-/**
- * POST /api/onboarding/verification — Save registration or insurance verification
- */
 export async function handleVerification(
   request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
@@ -202,26 +236,39 @@ export async function handleVerification(
   // Delete existing verification of same type
   await sql('DELETE FROM verifications WHERE electrician_id = $1 AND type = $2', [electricianId, data.type])
 
+  let verificationId: string
+
   if (data.type === 'registration') {
-    await sql(
+    const rows = await sql(
       `INSERT INTO verifications (electrician_id, type, scheme, reference_number, status)
-       VALUES ($1, $2, $3, $4, 'pending')`,
+       VALUES ($1, $2, $3, $4, 'pending') RETURNING id`,
       [electricianId, data.type, data.scheme || null, data.reference_number || null]
     )
+    verificationId = rows[0].id as string
+
+    // Trigger background verification
+    await triggerVerificationWorker(
+      env, verificationId, electricianId, data.type,
+      data.scheme, data.reference_number
+    )
   } else {
-    await sql(
+    const rows = await sql(
       `INSERT INTO verifications (electrician_id, type, document_r2_key, status)
-       VALUES ($1, $2, $3, 'pending')`,
+       VALUES ($1, $2, $3, 'pending') RETURNING id`,
       [electricianId, data.type, data.document_r2_key || null]
+    )
+    verificationId = rows[0].id as string
+
+    // Trigger background verification
+    await triggerVerificationWorker(
+      env, verificationId, electricianId, data.type,
+      undefined, undefined, data.document_r2_key
     )
   }
 
-  return json({ success: true }, 200, request)
+  return json({ success: true, verification_id: verificationId }, 200, request)
 }
 
-/**
- * PUT /api/onboarding/insurance-upload — Receive insurance file and store in R2
- */
 export async function handleInsuranceUpload(
   request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
@@ -240,45 +287,32 @@ export async function handleInsuranceUpload(
   return json({ key }, 200, request)
 }
 
-/**
- * POST /api/onboarding/verify-complete — Mark verification step as done
- */
 export async function handleVerifyComplete(
   request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
-
   await sql('UPDATE electricians SET onboarding_step = GREATEST(onboarding_step, 7) WHERE id = $1', [electricianId])
-
   return json({ success: true }, 200, request)
 }
 
-/**
- * GET /api/onboarding/go-live — Get data for go-live screen
- */
 export async function handleGoLiveData(
   request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
   const sql = neon(env.NEON_DATABASE_URL)
-  const rows = await sql(
-    'SELECT id, first_name, business_name FROM electricians WHERE clerk_id = $1',
-    [auth.userId]
-  )
+  const rows = await sql('SELECT id, first_name, business_name FROM electricians WHERE clerk_id = $1', [auth.userId])
   if (rows.length === 0) throw new AppError('Not found', 404)
 
   const elec = rows[0]
   const displayName = (elec.business_name as string) || (elec.first_name as string)
   const slug = generateSlug(displayName)
 
-  // Ensure agent_pages record exists
   const existing = await sql('SELECT slug FROM agent_pages WHERE electrician_id = $1', [elec.id])
 
   let finalSlug: string
   if (existing.length > 0) {
     finalSlug = existing[0].slug as string
   } else {
-    // Check slug uniqueness, append number if needed
     let candidate = slug
     let counter = 1
     while (true) {
@@ -288,11 +322,7 @@ export async function handleGoLiveData(
       counter++
     }
     finalSlug = candidate
-
-    await sql(
-      'INSERT INTO agent_pages (electrician_id, slug, is_active) VALUES ($1, $2, true)',
-      [elec.id, finalSlug]
-    )
+    await sql('INSERT INTO agent_pages (electrician_id, slug, is_active) VALUES ($1, $2, true)', [elec.id, finalSlug])
   }
 
   return json({
@@ -303,9 +333,6 @@ export async function handleGoLiveData(
   }, 200, request)
 }
 
-/**
- * POST /api/onboarding/activate — Set agent live
- */
 export async function handleActivate(
   request: Request, env: Env, auth: AuthContext
 ): Promise<Response> {
@@ -313,23 +340,13 @@ export async function handleActivate(
   const electricianId = await getElectricianId(sql, auth.userId)
 
   await sql(
-    `UPDATE electricians SET
-      agent_status = 'live',
-      onboarding_completed_at = now()
-    WHERE id = $1`,
+    `UPDATE electricians SET agent_status = 'live', onboarding_completed_at = now() WHERE id = $1`,
     [electricianId]
   )
 
-  // Create notification preferences with defaults
-  const existingPrefs = await sql(
-    'SELECT id FROM notification_preferences WHERE electrician_id = $1',
-    [electricianId]
-  )
+  const existingPrefs = await sql('SELECT id FROM notification_preferences WHERE electrician_id = $1', [electricianId])
   if (existingPrefs.length === 0) {
-    await sql(
-      'INSERT INTO notification_preferences (electrician_id) VALUES ($1)',
-      [electricianId]
-    )
+    await sql('INSERT INTO notification_preferences (electrician_id) VALUES ($1)', [electricianId])
   }
 
   return json({ success: true, status: 'live' }, 200, request)
