@@ -1,12 +1,21 @@
-import { ClerkProvider, SignIn, SignedIn, SignedOut } from '@clerk/clerk-react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { ClerkProvider, SignIn, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { Zap } from 'lucide-react'
+import StepYou from './components/onboarding/StepYou'
+import StepServices from './components/onboarding/StepServices'
+import { useApi } from './hooks/useApi'
+import type { MeResponse } from './types'
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 if (!CLERK_PUBLISHABLE_KEY) {
-  throw new Error('VITE_CLERK_PUBLISHABLE_KEY is required — add it to your Railway environment variables.')
+  throw new Error('VITE_CLERK_PUBLISHABLE_KEY is required')
 }
+
+// ===========================================
+// Auth screen
+// ===========================================
 
 function AuthScreen() {
   return (
@@ -33,10 +42,133 @@ function AuthScreen() {
   )
 }
 
+// ===========================================
+// App shell — checks onboarding state
+// ===========================================
+
+function AppShell() {
+  const api = useApi()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isLoaded } = useAuth()
+
+  const [loading, setLoading] = useState(true)
+  const [electrician, setElectrician] = useState<MeResponse | null>(null)
+
+  useEffect(() => {
+    if (!isLoaded) return
+
+    let cancelled = false
+
+    async function checkUser() {
+      try {
+        const data = await api.get<MeResponse>('/api/me')
+        if (cancelled) return
+        setElectrician(data)
+
+        // Route based on onboarding state
+        if (!data.exists) {
+          if (!location.pathname.startsWith('/onboarding')) {
+            navigate('/onboarding/you', { replace: true })
+          }
+        } else if (data.electrician) {
+          const step = data.electrician.onboarding_step
+          if (data.electrician.agent_status === 'onboarding') {
+            // Send to the right onboarding step
+            const stepRoutes: Record<number, string> = {
+              1: '/onboarding/you',
+              2: '/onboarding/you',
+              3: '/onboarding/services',
+              4: '/onboarding/pricing',
+              5: '/onboarding/voice',
+              6: '/onboarding/verify',
+              7: '/onboarding/go-live',
+            }
+            const target = stepRoutes[step] || '/onboarding/you'
+            if (!location.pathname.startsWith('/onboarding')) {
+              navigate(target, { replace: true })
+            }
+          } else {
+            // Onboarding complete — dashboard
+            if (location.pathname.startsWith('/onboarding')) {
+              navigate('/', { replace: true })
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check user:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    checkUser()
+    return () => {
+      cancelled = true
+    }
+  }, [isLoaded])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-50">
+        <div className="flex flex-col items-center gap-3">
+          <Zap className="h-8 w-8 text-brand-600 animate-pulse" />
+          <p className="text-sm text-surface-700">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Routes>
+      {/* Onboarding */}
+      <Route path="/onboarding/you" element={<StepYou />} />
+      <Route path="/onboarding/services" element={<StepServices />} />
+      {/* Steps 4-7 placeholders — built in later batches */}
+      <Route path="/onboarding/pricing" element={<PlaceholderStep step="Pricing" num={4} />} />
+      <Route path="/onboarding/voice" element={<PlaceholderStep step="Voice" num={5} />} />
+      <Route path="/onboarding/verify" element={<PlaceholderStep step="Verify" num={6} />} />
+      <Route path="/onboarding/go-live" element={<PlaceholderStep step="Go Live" num={7} />} />
+
+      {/* Dashboard */}
+      <Route path="/" element={<DashboardShell />} />
+      <Route path="/dashboard/*" element={<DashboardShell />} />
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}
+
+// ===========================================
+// Placeholder for unbuilt onboarding steps
+// ===========================================
+
+function PlaceholderStep({ step, num }: { step: string; num: number }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface-50 px-4">
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 mb-4">
+          <Zap className="h-8 w-8 text-brand-600" />
+        </div>
+        <h1 className="text-xl font-semibold text-surface-900 mb-2">
+          Step {num}: {step}
+        </h1>
+        <p className="text-sm text-surface-700">
+          This step will be built in a later batch.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ===========================================
+// Dashboard shell (same as before)
+// ===========================================
+
 function DashboardShell() {
   return (
     <div className="min-h-screen bg-surface-50">
-      {/* Top bar */}
       <header className="sticky top-0 z-40 bg-white border-b border-surface-200">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-2">
@@ -52,7 +184,6 @@ function DashboardShell() {
         </div>
       </header>
 
-      {/* Main content area — placeholder for Batch 12+ */}
       <main className="px-4 py-6">
         <div className="max-w-lg mx-auto text-center py-20">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-50 mb-4">
@@ -63,12 +194,10 @@ function DashboardShell() {
           </h1>
           <p className="text-surface-700 text-sm leading-relaxed">
             When a customer gets in touch, their conversation will appear here.
-            Onboarding and inbox screens are coming in the next batches.
           </p>
         </div>
       </main>
 
-      {/* Bottom tab bar — 4 tabs */}
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-surface-200">
         <div className="flex items-center justify-around h-16">
           <TabItem icon="inbox" label="Inbox" active />
@@ -97,7 +226,6 @@ function TabItem({ icon, label, active = false }: { icon: string; label: string;
 }
 
 function TabIcon({ name, className }: { name: string; className?: string }) {
-  // Minimal inline SVG icons to avoid extra Lucide bundle for nav
   const paths: Record<string, string> = {
     inbox: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
     stats: 'M18 20V10M12 20V4M6 20v-6',
@@ -122,6 +250,10 @@ function TabIcon({ name, className }: { name: string; className?: string }) {
   )
 }
 
+// ===========================================
+// Root app
+// ===========================================
+
 export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
@@ -132,15 +264,7 @@ export default function App() {
           </Routes>
         </SignedOut>
         <SignedIn>
-          <Routes>
-            <Route path="/" element={<DashboardShell />} />
-            {/* Onboarding routes — Batch 4+ */}
-            <Route path="/onboarding/*" element={<DashboardShell />} />
-            {/* Dashboard routes — Batch 12+ */}
-            <Route path="/dashboard/*" element={<DashboardShell />} />
-            {/* Catch-all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AppShell />
         </SignedIn>
       </BrowserRouter>
     </ClerkProvider>
