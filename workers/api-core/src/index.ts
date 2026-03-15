@@ -3,6 +3,7 @@ import { authenticate, type AuthContext } from './middleware/auth'
 import { handlePreflight } from './middleware/cors'
 import { json, errorResponse, handleError } from './utils/errors'
 import { handleGetVapidKey, handlePushSubscribe, handleGetNotificationPreferences, handleUpdateNotificationPreferences } from './routes/notifications'
+import { handleGetChannels, handleGetBilling, handleGetAgentProfile, handleDataExport } from './routes/settings'
 import {
   handleOnboardingDetails, handleOnboardingServices, handleGetServices,
   handleOnboardingPricing, handleVoiceBlobUpload, handleVoiceConfirm,
@@ -105,6 +106,7 @@ const routes: Route[] = [
   { method: 'DELETE', pattern: /^\/api\/agent\/rules\/(?<id>[a-f0-9-]+)$/, handler: async (r, e, a, p) => handleDeleteRule(r, e, a, p) },
   { method: 'GET', pattern: /^\/api\/agent\/suggestions$/, handler: async (r, e, a) => handleGetSuggestions(r, e, a) },
   { method: 'POST', pattern: /^\/api\/agent\/suggestions\/(?<id>[a-f0-9-]+)$/, handler: async (r, e, a, p) => handleSuggestionAction(r, e, a, p) },
+  { method: 'GET', pattern: /^\/api\/agent\/profile$/, handler: async (r, e, a) => handleGetAgentProfile(r, e, a) },
 
   // Stats
   { method: 'GET', pattern: /^\/api\/stats\/summary$/, handler: async (r, e, a) => handleStatsSummary(r, e, a) },
@@ -118,6 +120,11 @@ const routes: Route[] = [
     handler: async (r, e, a) => handleGetNotificationPreferences(r, e, a) },
   { method: 'PUT', pattern: /^\/api\/settings\/notifications$/,
     handler: async (r, e, a) => handleUpdateNotificationPreferences(r, e, a) },
+
+  // Settings
+  { method: 'GET', pattern: /^\/api\/settings\/channels$/, handler: async (r, e, a) => handleGetChannels(r, e, a) },
+  { method: 'GET', pattern: /^\/api\/settings\/billing$/, handler: async (r, e, a) => handleGetBilling(r, e, a) },
+  { method: 'POST', pattern: /^\/api\/settings\/export$/, handler: async (r, e, a) => handleDataExport(r, e, a) },
 ]
 
 // ===========================================
