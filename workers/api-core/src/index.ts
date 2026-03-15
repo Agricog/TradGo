@@ -7,9 +7,13 @@ import {
   handleOnboardingServices,
   handleGetServices,
   handleOnboardingPricing,
-  handleVoiceUpload,
-  handleVoiceConfirm,
   handleVoiceBlobUpload,
+  handleVoiceConfirm,
+  handleVerification,
+  handleInsuranceUpload,
+  handleVerifyComplete,
+  handleGoLiveData,
+  handleActivate,
 } from './routes/onboarding'
 
 // ===========================================
@@ -50,81 +54,44 @@ interface Route {
 // ===========================================
 
 const routes: Route[] = [
-  // Health check
-  {
-    method: 'GET',
-    pattern: /^\/health$/,
-    public: true,
-    handler: async (request: Request) => {
-      return json({ status: 'ok', service: 'tradgo-api-core' }, 200, request)
-    },
-  },
+  { method: 'GET', pattern: /^\/health$/, public: true,
+    handler: async (request: Request) => json({ status: 'ok', service: 'tradgo-api-core' }, 200, request) },
 
-  // Auth: get current electrician
-  {
-    method: 'GET',
-    pattern: /^\/api\/me$/,
+  { method: 'GET', pattern: /^\/api\/me$/,
     handler: async (request, env, auth) => {
       const sql = neon(env.NEON_DATABASE_URL)
       const rows = await sql(
         'SELECT id, first_name, business_name, email, agent_status, onboarding_step FROM electricians WHERE clerk_id = $1',
         [auth.userId]
       )
-      if (rows.length === 0) {
-        return json({ exists: false }, 200, request)
-      }
+      if (rows.length === 0) return json({ exists: false }, 200, request)
       return json({ exists: true, electrician: rows[0] }, 200, request)
     },
   },
 
-  // Onboarding: save details (step 2)
-  {
-    method: 'POST',
-    pattern: /^\/api\/onboarding\/details$/,
-    handler: async (request, env, auth) => handleOnboardingDetails(request, env, auth),
-  },
-
-  // Onboarding: save services (step 3)
-  {
-    method: 'POST',
-    pattern: /^\/api\/onboarding\/services$/,
-    handler: async (request, env, auth) => handleOnboardingServices(request, env, auth),
-  },
-
-  // Onboarding: get services (for pricing step)
-  {
-    method: 'GET',
-    pattern: /^\/api\/onboarding\/services$/,
-    handler: async (request, env, auth) => handleGetServices(request, env, auth),
-  },
-
-  // Onboarding: save pricing (step 4)
-  {
-    method: 'POST',
-    pattern: /^\/api\/onboarding\/pricing$/,
-    handler: async (request, env, auth) => handleOnboardingPricing(request, env, auth),
-  },
-
-  // Onboarding: get voice upload URL (step 5)
-  {
-    method: 'POST',
-    pattern: /^\/api\/onboarding\/voice-upload$/,
-    handler: async (request, env, auth) => handleVoiceUpload(request, env, auth),
-  },
-
-  // Onboarding: upload voice blob directly
-  {
-    method: 'PUT',
-    pattern: /^\/api\/onboarding\/voice-blob$/,
-    handler: async (request, env, auth) => handleVoiceBlobUpload(request, env, auth),
-  },
-
-  // Onboarding: confirm voice recording (step 5)
-  {
-    method: 'POST',
-    pattern: /^\/api\/onboarding\/voice-confirm$/,
-    handler: async (request, env, auth) => handleVoiceConfirm(request, env, auth),
-  },
+  // Onboarding
+  { method: 'POST', pattern: /^\/api\/onboarding\/details$/,
+    handler: async (request, env, auth) => handleOnboardingDetails(request, env, auth) },
+  { method: 'POST', pattern: /^\/api\/onboarding\/services$/,
+    handler: async (request, env, auth) => handleOnboardingServices(request, env, auth) },
+  { method: 'GET', pattern: /^\/api\/onboarding\/services$/,
+    handler: async (request, env, auth) => handleGetServices(request, env, auth) },
+  { method: 'POST', pattern: /^\/api\/onboarding\/pricing$/,
+    handler: async (request, env, auth) => handleOnboardingPricing(request, env, auth) },
+  { method: 'PUT', pattern: /^\/api\/onboarding\/voice-blob$/,
+    handler: async (request, env, auth) => handleVoiceBlobUpload(request, env, auth) },
+  { method: 'POST', pattern: /^\/api\/onboarding\/voice-confirm$/,
+    handler: async (request, env, auth) => handleVoiceConfirm(request, env, auth) },
+  { method: 'POST', pattern: /^\/api\/onboarding\/verification$/,
+    handler: async (request, env, auth) => handleVerification(request, env, auth) },
+  { method: 'PUT', pattern: /^\/api\/onboarding\/insurance-upload$/,
+    handler: async (request, env, auth) => handleInsuranceUpload(request, env, auth) },
+  { method: 'POST', pattern: /^\/api\/onboarding\/verify-complete$/,
+    handler: async (request, env, auth) => handleVerifyComplete(request, env, auth) },
+  { method: 'GET', pattern: /^\/api\/onboarding\/go-live$/,
+    handler: async (request, env, auth) => handleGoLiveData(request, env, auth) },
+  { method: 'POST', pattern: /^\/api\/onboarding\/activate$/,
+    handler: async (request, env, auth) => handleActivate(request, env, auth) },
 ]
 
 // ===========================================
@@ -140,9 +107,7 @@ function matchRoute(
     const match = pathname.match(route.pattern)
     if (match) {
       const params: Record<string, string> = {}
-      if (match.groups) {
-        Object.assign(params, match.groups)
-      }
+      if (match.groups) Object.assign(params, match.groups)
       return { route, params }
     }
   }
@@ -155,16 +120,11 @@ function matchRoute(
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === 'OPTIONS') {
-      return handlePreflight(request)
-    }
+    if (request.method === 'OPTIONS') return handlePreflight(request)
 
     const url = new URL(request.url)
     const matched = matchRoute(request.method, url.pathname)
-
-    if (!matched) {
-      return errorResponse('Not found', 404, request)
-    }
+    if (!matched) return errorResponse('Not found', 404, request)
 
     const { route, params } = matched
 
@@ -174,9 +134,7 @@ export default {
       }
 
       const auth = await authenticate(request, env)
-      if (!auth) {
-        return errorResponse('Unauthorized', 401, request)
-      }
+      if (!auth) return errorResponse('Unauthorized', 401, request)
 
       return await (route.handler as HandlerFn)(request, env, auth, params)
     } catch (err) {
