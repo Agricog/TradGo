@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Zap, MessageSquare, BarChart3, Bot, Settings } from 'lucide-react'
 import { useApi } from '@/hooks/useApi'
+import TrialBanner from '@/components/ui/TrialBanner'
 
 const TABS = [
   { to: '/dashboard', icon: MessageSquare, label: 'Inbox', end: true },
@@ -54,6 +55,7 @@ export default function DashboardLayout() {
 
       {/* Page content */}
       <main className="px-4 py-4">
+        <TrialBanner />
         <Outlet />
       </main>
 
