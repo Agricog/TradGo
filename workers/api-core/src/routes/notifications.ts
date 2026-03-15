@@ -3,7 +3,7 @@ import { z } from 'zod'
 import type { Env } from '../index'
 import type { AuthContext } from '../middleware/auth'
 import { json, AppError } from '../utils/errors'
-import { validate } from '../utils/validation'
+import { validateBody } from '../utils/validation'
 
 // ===========================================
 // Schemas
@@ -60,7 +60,7 @@ export async function handlePushSubscribe(
   env: Env,
   auth: AuthContext,
 ): Promise<Response> {
-  const body = await validate(request, pushSubscribeSchema)
+  const body = await validateBody(request, pushSubscribeSchema)
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
 
@@ -112,7 +112,7 @@ export async function handleUpdateNotificationPreferences(
   env: Env,
   auth: AuthContext,
 ): Promise<Response> {
-  const body = await validate(request, preferencesSchema)
+  const body = await validateBody(request, preferencesSchema)
   const sql = neon(env.NEON_DATABASE_URL)
   const electricianId = await getElectricianId(sql, auth.userId)
 
