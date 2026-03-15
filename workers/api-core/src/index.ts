@@ -1,39 +1,24 @@
+
 import { neon } from '@neondatabase/serverless'
 import { authenticate, type AuthContext } from './middleware/auth'
 import { handlePreflight } from './middleware/cors'
 import { json, errorResponse, handleError } from './utils/errors'
 import {
-  handleOnboardingDetails,
-  handleOnboardingServices,
-  handleGetServices,
-  handleOnboardingPricing,
-  handleVoiceBlobUpload,
-  handleVoiceConfirm,
-  handleVerification,
-  handleInsuranceUpload,
-  handleVerifyComplete,
-  handleGoLiveData,
-  handleActivate,
+  handleOnboardingDetails, handleOnboardingServices, handleGetServices,
+  handleOnboardingPricing, handleVoiceBlobUpload, handleVoiceConfirm,
+  handleVerification, handleInsuranceUpload, handleVerifyComplete,
+  handleGoLiveData, handleActivate,
 } from './routes/onboarding'
 import {
-  handleListConversations,
-  handleGetConversation,
-  handleApprove,
-  handleEdit,
-  handleReject,
-  handleReply,
-  handleComplete,
+  handleListConversations, handleGetConversation,
+  handleApprove, handleEdit, handleReject, handleReply, handleComplete,
 } from './routes/conversations'
 import {
-  handleGetAgentStatus,
-  handleUpdateAgentStatus,
-  handleGetRules,
-  handleCreateRule,
-  handleUpdateRule,
-  handleDeleteRule,
-  handleGetSuggestions,
-  handleSuggestionAction,
+  handleGetAgentStatus, handleUpdateAgentStatus,
+  handleGetRules, handleCreateRule, handleUpdateRule, handleDeleteRule,
+  handleGetSuggestions, handleSuggestionAction,
 } from './routes/agent'
+import { handleStatsSummary } from './routes/stats'
 
 // ===========================================
 // Types
@@ -53,16 +38,11 @@ export interface Env {
 }
 
 type HandlerFn = (
-  request: Request,
-  env: Env,
-  auth: AuthContext,
-  params: Record<string, string>
+  request: Request, env: Env, auth: AuthContext, params: Record<string, string>
 ) => Promise<Response>
 
 type PublicHandlerFn = (
-  request: Request,
-  env: Env,
-  params: Record<string, string>
+  request: Request, env: Env, params: Record<string, string>
 ) => Promise<Response>
 
 interface Route {
@@ -125,6 +105,9 @@ const routes: Route[] = [
   { method: 'DELETE', pattern: /^\/api\/agent\/rules\/(?<id>[a-f0-9-]+)$/, handler: async (r, e, a, p) => handleDeleteRule(r, e, a, p) },
   { method: 'GET', pattern: /^\/api\/agent\/suggestions$/, handler: async (r, e, a) => handleGetSuggestions(r, e, a) },
   { method: 'POST', pattern: /^\/api\/agent\/suggestions\/(?<id>[a-f0-9-]+)$/, handler: async (r, e, a, p) => handleSuggestionAction(r, e, a, p) },
+
+  // Stats
+  { method: 'GET', pattern: /^\/api\/stats\/summary$/, handler: async (r, e, a) => handleStatsSummary(r, e, a) },
 ]
 
 // ===========================================
