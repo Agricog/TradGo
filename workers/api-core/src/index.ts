@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import { authenticate, type AuthContext } from './middleware/auth'
 import { handlePreflight } from './middleware/cors'
 import { json, errorResponse, handleError } from './utils/errors'
+import { handleGetVapidKey, handlePushSubscribe, handleGetNotificationPreferences, handleUpdateNotificationPreferences } from './routes/notifications'
 import {
   handleOnboardingDetails, handleOnboardingServices, handleGetServices,
   handleOnboardingPricing, handleVoiceBlobUpload, handleVoiceConfirm,
