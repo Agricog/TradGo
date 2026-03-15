@@ -1,0 +1,16 @@
+name = "tradgo-api-stats"
+main = "src/index.ts"
+compatibility_date = "2024-09-09"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via Cloudflare dashboard):
+# NEON_DATABASE_URL
+# ANTHROPIC_API_KEY
+
+[triggers]
+crons = [
+  "0 3 * * *",
+  "0 7 * * *"
+]
