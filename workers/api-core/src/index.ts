@@ -2,6 +2,8 @@ import { neon } from '@neondatabase/serverless'
 import { authenticate, type AuthContext } from './middleware/auth'
 import { handlePreflight } from './middleware/cors'
 import { json, errorResponse, handleError } from './utils/errors'
+import { checkRateLimit, getClientIp, rateLimitedResponse } from './middleware/rate-limiter'
+import { applySecurityHeaders } from './middleware/security-headers'
 import { handleGetVapidKey, handlePushSubscribe, handleGetNotificationPreferences, handleUpdateNotificationPreferences } from './routes/notifications'
 import { handleGetChannels, handleGetAgentProfile, handleDataExport } from './routes/settings'
 import { handleCreateCheckout, handleBillingPortal, handleBillingStatus, handleStripeWebhook } from './routes/billing'
@@ -57,6 +59,7 @@ interface Route {
   pattern: RegExp
   handler: HandlerFn | PublicHandlerFn
   public?: boolean
+  rateLimit?: { max: number; windowMs: number }
 }
 
 // ===========================================
@@ -132,8 +135,12 @@ const routes: Route[] = [
   { method: 'POST', pattern: /^\/api\/settings\/export$/, handler: async (r, e, a) => handleDataExport(r, e, a) },
 
   // Billing
-  { method: 'POST', pattern: /^\/api\/billing\/create-checkout$/, handler: async (r, e, a) => handleCreateCheckout(r, e, a) },
-  { method: 'POST', pattern: /^\/api\/billing\/portal$/, handler: async (r, e, a) => handleBillingPortal(r, e, a) },
+  { method: 'POST', pattern: /^\/api\/billing\/create-checkout$/,
+    rateLimit: { max: 5, windowMs: 60_000 },
+    handler: async (r, e, a) => handleCreateCheckout(r, e, a) },
+  { method: 'POST', pattern: /^\/api\/billing\/portal$/,
+    rateLimit: { max: 5, windowMs: 60_000 },
+    handler: async (r, e, a) => handleBillingPortal(r, e, a) },
   { method: 'GET', pattern: /^\/api\/billing\/status$/, handler: async (r, e, a) => handleBillingStatus(r, e, a) },
   { method: 'POST', pattern: /^\/api\/billing\/webhook$/, public: true,
     handler: async (r, e) => handleStripeWebhook(r, e) },
@@ -173,15 +180,38 @@ export default {
 
     const { route, params } = matched
 
+    // Global rate limit: 120 requests per minute per IP
+    const ip = getClientIp(request)
+    const globalLimit = checkRateLimit(`global:${ip}`, 120, 60_000)
+    if (!globalLimit.allowed) {
+      return rateLimitedResponse(globalLimit.retryAfter, request)
+    }
+
+    // Per-route rate limit if configured
+    if (route.rateLimit) {
+      const routeLimit = checkRateLimit(
+        `route:${ip}:${url.pathname}`,
+        route.rateLimit.max,
+        route.rateLimit.windowMs
+      )
+      if (!routeLimit.allowed) {
+        return rateLimitedResponse(routeLimit.retryAfter, request)
+      }
+    }
+
     try {
+      let response: Response
+
       if (route.public) {
-        return await (route.handler as PublicHandlerFn)(request, env, params)
+        response = await (route.handler as PublicHandlerFn)(request, env, params)
+      } else {
+        const auth = await authenticate(request, env)
+        if (!auth) return errorResponse('Unauthorized', 401, request)
+        response = await (route.handler as HandlerFn)(request, env, auth, params)
       }
 
-      const auth = await authenticate(request, env)
-      if (!auth) return errorResponse('Unauthorized', 401, request)
-
-      return await (route.handler as HandlerFn)(request, env, auth, params)
+      // Apply security headers to all responses
+      return applySecurityHeaders(response)
     } catch (err) {
       return handleError(err, request, env.ENVIRONMENT === 'production')
     }
