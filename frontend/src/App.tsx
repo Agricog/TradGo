@@ -27,6 +27,7 @@ import ConversationDetail from './components/dashboard/inbox/ConversationDetail'
 import StatsView from './components/dashboard/stats/StatsView'
 import AgentView from './components/dashboard/agent/AgentView'
 import SettingsView from './components/dashboard/settings/SettingsView'
+import AgentPage from './components/agent-page/AgentPage'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -190,15 +191,29 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <BrowserRouter>
-        <SignedOut>
-          <Routes>
-            <Route path="*" element={<AuthScreen />} />
-          </Routes>
-        </SignedOut>
-        <SignedIn>
-          <AppShell />
-        </SignedIn>
+        <Routes>
+          {/* Public: customer-facing agent page — no auth required */}
+          <Route path="/agent/:slug" element={<AgentPage />} />
+
+          {/* Everything else goes through auth */}
+          <Route path="*" element={<AuthGate />} />
+        </Routes>
       </BrowserRouter>
     </ClerkProvider>
+  )
+}
+
+function AuthGate() {
+  return (
+    <>
+      <SignedOut>
+        <Routes>
+          <Route path="*" element={<AuthScreen />} />
+        </Routes>
+      </SignedOut>
+      <SignedIn>
+        <AppShell />
+      </SignedIn>
+    </>
   )
 }
