@@ -2,21 +2,11 @@ import { neon } from '@neondatabase/serverless'
 import type { Env } from '../index'
 import { buildSystemPrompt, type ElectricianProfile } from './prompt-builder'
 import { parseAgentResponse } from './classifier'
+import { checkConversationRate, checkElectricianDailyRate } from './rate-limiter'
 
 /**
  * Handle an inbound SMS from Twilio.
  * Returns TwiML response string.
- *
- * Flow:
- * 1. Identify electrician by Twilio number (the 'To' number)
- * 2. Find or create conversation by customer phone (the 'From' number)
- * 3. Store the customer message
- * 4. Check if agent is paused → send offline reply
- * 5. Load electrician profile for prompt building
- * 6. Build system prompt + conversation history
- * 7. Call Claude Sonnet
- * 8. Parse and classify response
- * 9. Route: SAFE → reply immediately, APPROVAL → hold, ESCALATE → flag
  */
 export async function handleInboundSms(
   env: Env,
@@ -67,13 +57,16 @@ export async function handleInboundSms(
     // Check if agent is paused for this conversation (electrician took over)
     const pausedUntil = existingConv[0].agent_paused_until as string | null
     if (pausedUntil && new Date(pausedUntil) > new Date()) {
-      // Agent paused — just store message, don't respond
       await storeMessage(sql, conversationId, 'customer', messageBody)
-      // No TwiML response — silent
       return '<Response></Response>'
     }
   } else {
-    // Create new conversation
+    // Rate check: new conversations per electrician per day
+    const dailyRate = checkElectricianDailyRate(electricianId)
+    if (!dailyRate.allowed) {
+      return twiml('Sorry, this agent is currently busy. Please try again later.')
+    }
+
     const newConv = await sql(
       `INSERT INTO conversations (electrician_id, channel, customer_phone, status)
        VALUES ($1, 'sms', $2, 'active') RETURNING id`,
@@ -82,10 +75,16 @@ export async function handleInboundSms(
     conversationId = newConv[0].id as string
   }
 
+  // Rate check: messages per conversation per hour
+  const convRate = checkConversationRate(conversationId)
+  if (!convRate.allowed) {
+    return twiml("Let's slow down a bit — you can send another message shortly.")
+  }
+
   // 4. Store customer message
   await storeMessage(sql, conversationId, 'customer', messageBody)
 
-  // 4.5 Emergency pre-check — skip LLM call entirely for emergencies
+  // 4.5 Emergency pre-check
   if (isEmergencyMessage(messageBody)) {
     const name = electrician.first_name as string
     const phone = electrician.phone as string
@@ -104,12 +103,12 @@ export async function handleInboundSms(
   // 5. Load full electrician profile
   const profile = await loadElectricianProfile(sql, electricianId)
 
-  // 6. Load conversation history
+  // 6. Load conversation history (last 10 messages for context)
   const history = await sql(
     `SELECT role, content FROM messages
      WHERE conversation_id = $1
      ORDER BY created_at ASC
-     LIMIT 20`,
+     LIMIT 10`,
     [conversationId]
   )
 
@@ -133,16 +132,12 @@ export async function handleInboundSms(
 
   // 10. Route based on classification
   if (parsed.classification === 'escalate') {
-    // Store agent message as escalation
     await storeMessage(sql, conversationId, 'agent', parsed.response, 'escalate', parsed.inboxSummary)
-
-    // Update conversation status
     await sql(
       `UPDATE conversations SET status = 'escalated', escalation_reason = $1 WHERE id = $2`,
       [parsed.inboxSummary || 'Escalated by agent', conversationId]
     )
 
-    // Send escalation message to customer
     const name = profile.first_name
     const phone = profile.phone
     return twiml(
@@ -151,16 +146,12 @@ export async function handleInboundSms(
   }
 
   if (parsed.classification === 'needs_approval') {
-    // Store but don't send — hold for electrician approval
     await storeMessage(sql, conversationId, 'agent', parsed.response, 'needs_approval', parsed.inboxSummary)
-
-    // Update conversation status
     await sql(
       `UPDATE conversations SET status = 'awaiting_approval' WHERE id = $1`,
       [conversationId]
     )
 
-    // Send a holding message to the customer
     const name = profile.first_name
     return twiml(
       `${name}'s agent is checking on this — you'll hear back shortly.`
@@ -178,7 +169,6 @@ export async function handleInboundSms(
 // ===========================================
 
 function twiml(message: string): string {
-  // Escape XML special characters
   const escaped = message
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -208,15 +198,7 @@ async function storeMessage(
   await sql(
     `INSERT INTO messages (conversation_id, role, content, classification, inbox_summary, sent, sent_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [
-      conversationId,
-      role,
-      content,
-      classification || null,
-      inboxSummary || null,
-      sent || false,
-      sent ? new Date().toISOString() : null,
-    ]
+    [conversationId, role, content, classification || null, inboxSummary || null, sent || false, sent ? new Date().toISOString() : null]
   )
 }
 
@@ -224,57 +206,40 @@ async function loadElectricianProfile(
   sql: ReturnType<typeof neon>,
   electricianId: string
 ): Promise<ElectricianProfile> {
-  // Get electrician details
   const elecRows = await sql(
-    `SELECT first_name, business_name, postcode, service_radius_miles, phone
-     FROM electricians WHERE id = $1`,
+    'SELECT first_name, business_name, postcode, service_radius_miles, phone FROM electricians WHERE id = $1',
     [electricianId]
   )
   const elec = elecRows[0]
 
-  // Get services
   const services = await sql(
-    `SELECT category, price_from, price_to, day_rate, pricing_note
-     FROM services WHERE electrician_id = $1`,
+    'SELECT category, price_from, price_to, day_rate, pricing_note FROM services WHERE electrician_id = $1',
     [electricianId]
   )
 
-  // Get verifications
   const verifications = await sql(
-    `SELECT type, scheme, status, reference_number
-     FROM verifications WHERE electrician_id = $1 AND status = 'verified'`,
+    `SELECT type, scheme, status, reference_number FROM verifications WHERE electrician_id = $1 AND status = 'verified'`,
     [electricianId]
   )
 
-  // Get voice tone notes
   const voice = await sql(
-    `SELECT tone_notes FROM voice_recordings
-     WHERE electrician_id = $1 AND processed = true
-     ORDER BY created_at DESC LIMIT 1`,
+    'SELECT tone_notes FROM voice_recordings WHERE electrician_id = $1 AND processed = true ORDER BY created_at DESC LIMIT 1',
     [electricianId]
   )
 
-  // Get agent rules
   const rules = await sql(
-    `SELECT rule_text FROM agent_rules
-     WHERE electrician_id = $1 AND active = true
-     ORDER BY created_at`,
+    'SELECT rule_text FROM agent_rules WHERE electrician_id = $1 AND active = true ORDER BY created_at',
     [electricianId]
   )
 
-  // Resolve area from postcode
   let area = elec.postcode as string
   try {
-    const pcRes = await fetch(
-      `https://api.postcodes.io/postcodes/${encodeURIComponent(area)}`
-    )
+    const pcRes = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(area)}`)
     const pcData = await pcRes.json() as { result?: { admin_district?: string; region?: string } }
     if (pcData.result) {
       area = pcData.result.admin_district || pcData.result.region || area
     }
-  } catch {
-    // Use postcode as fallback
-  }
+  } catch { /* fallback to postcode */ }
 
   return {
     first_name: elec.first_name as string,
@@ -309,34 +274,16 @@ async function updateConversationData(
   const values: unknown[] = []
   let paramIndex = 1
 
-  if (extracted.customer_name) {
-    fields.push(`customer_name = $${paramIndex++}`)
-    values.push(extracted.customer_name)
-  }
-  if (extracted.job_type) {
-    fields.push(`job_type = $${paramIndex++}`)
-    values.push(extracted.job_type)
-  }
-  if (extracted.postcode) {
-    fields.push(`job_location_postcode = $${paramIndex++}`)
-    values.push(extracted.postcode)
-  }
-  if (extracted.property_type) {
-    fields.push(`property_type = $${paramIndex++}`)
-    values.push(extracted.property_type)
-  }
-  if (extracted.urgency) {
-    fields.push(`urgency = $${paramIndex++}`)
-    values.push(extracted.urgency)
-  }
+  if (extracted.customer_name) { fields.push(`customer_name = $${paramIndex++}`); values.push(extracted.customer_name) }
+  if (extracted.job_type) { fields.push(`job_type = $${paramIndex++}`); values.push(extracted.job_type) }
+  if (extracted.postcode) { fields.push(`job_location_postcode = $${paramIndex++}`); values.push(extracted.postcode) }
+  if (extracted.property_type) { fields.push(`property_type = $${paramIndex++}`); values.push(extracted.property_type) }
+  if (extracted.urgency) { fields.push(`urgency = $${paramIndex++}`); values.push(extracted.urgency) }
 
   if (fields.length === 0) return
 
   values.push(conversationId)
-  await sql(
-    `UPDATE conversations SET ${fields.join(', ')} WHERE id = $${paramIndex}`,
-    values
-  )
+  await sql(`UPDATE conversations SET ${fields.join(', ')} WHERE id = $${paramIndex}`, values)
 }
 
 async function callClaude(
@@ -373,9 +320,7 @@ async function callClaude(
   }
 
   const textBlock = data.content.find((c) => c.type === 'text')
-  if (!textBlock?.text) {
-    throw new Error('No text in Claude response')
-  }
+  if (!textBlock?.text) throw new Error('No text in Claude response')
 
   return textBlock.text
 }
