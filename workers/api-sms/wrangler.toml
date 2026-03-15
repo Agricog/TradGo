@@ -1,0 +1,12 @@
+name = "tradgo-api-sms"
+main = "src/index.ts"
+compatibility_date = "2024-09-09"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via Cloudflare dashboard):
+# NEON_DATABASE_URL
+# TWILIO_ACCOUNT_SID
+# TWILIO_AUTH_TOKEN
+# ANTHROPIC_API_KEY
