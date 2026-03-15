@@ -80,11 +80,9 @@ export default function StepPricing() {
   }, [])
 
   const updateService = (index: number, field: keyof ServicePrice, value: string | boolean) => {
-    setServices((prev) => {
-      const next = [...prev]
-      next[index] = { ...next[index], [field]: value }
-      return next
-    })
+    setServices((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
+    )
   }
 
   const handleNext = async () => {
