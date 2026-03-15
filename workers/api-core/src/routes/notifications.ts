@@ -1,100 +1,152 @@
-const API_URL = import.meta.env.VITE_API_URL || ''
+import { neon } from '@neondatabase/serverless'
+import { z } from 'zod'
+import type { Env } from '../index'
+import type { AuthContext } from '../middleware/auth'
+import { json, AppError } from '../utils/errors'
+import { validate } from '../utils/validation'
+
+// ===========================================
+// Schemas
+// ===========================================
+
+const pushSubscribeSchema = z.object({
+  subscription: z.object({
+    endpoint: z.string().url(),
+    keys: z.object({
+      p256dh: z.string(),
+      auth: z.string(),
+    }),
+    expirationTime: z.number().nullable().optional(),
+  }),
+})
+
+const preferencesSchema = z.object({
+  push_enabled: z.boolean().optional(),
+  digest_email_enabled: z.boolean().optional(),
+  notification_sound: z.boolean().optional(),
+  digest_email_time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+})
+
+// ===========================================
+// Helpers
+// ===========================================
+
+async function getElectricianId(sql: ReturnType<typeof neon>, clerkId: string): Promise<string> {
+  const rows = await sql('SELECT id FROM electricians WHERE clerk_id = $1', [clerkId])
+  if (rows.length === 0) throw new AppError('Electrician not found', 404)
+  return rows[0].id as string
+}
+
+// ===========================================
+// Handlers
+// ===========================================
 
 /**
- * Request push notification permission and register the subscription
- * with the backend. Returns true if permission was granted.
+ * GET /api/notifications/vapid-key
  */
-export async function requestPushPermission(getToken: () => Promise<string | null>): Promise<boolean> {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.warn('Push notifications not supported in this browser')
-    return false
-  }
-
-  try {
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') return false
-
-    const registration = await navigator.serviceWorker.ready
-
-    // Check for existing subscription
-    let subscription = await registration.pushManager.getSubscription()
-
-    if (!subscription) {
-      // Get VAPID public key from server
-      const token = await getToken()
-      const keyResponse = await fetch(`${API_URL}/api/notifications/vapid-key`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
-      if (!keyResponse.ok) return false
-
-      const { publicKey } = await keyResponse.json()
-
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      })
-    }
-
-    // Send subscription to backend
-    const token = await getToken()
-    const response = await fetch(`${API_URL}/api/notifications/push-subscribe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ subscription: subscription.toJSON() }),
-    })
-
-    return response.ok
-  } catch (err) {
-    console.error('Push notification setup failed:', err)
-    return false
-  }
+export async function handleGetVapidKey(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const publicKey = (env as Record<string, string>).VAPID_PUBLIC_KEY || ''
+  return json({ publicKey }, 200, request)
 }
 
 /**
- * Check if push notifications are currently enabled.
+ * POST /api/notifications/push-subscribe
  */
-export async function isPushEnabled(): Promise<boolean> {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false
+export async function handlePushSubscribe(
+  request: Request,
+  env: Env,
+  auth: AuthContext,
+): Promise<Response> {
+  const body = await validate(request, pushSubscribeSchema)
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
 
-  try {
-    const permission = Notification.permission
-    if (permission !== 'granted') return false
+  await sql(
+    `UPDATE notification_preferences
+     SET push_subscription = $2, push_enabled = true, updated_at = NOW()
+     WHERE electrician_id = $1`,
+    [electricianId, JSON.stringify(body.subscription)]
+  )
 
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
-    return subscription !== null
-  } catch {
-    return false
-  }
+  return json({ success: true }, 200, request)
 }
 
 /**
- * Unsubscribe from push notifications.
+ * GET /api/settings/notifications
  */
-export async function unsubscribePush(): Promise<boolean> {
-  try {
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
-    if (subscription) {
-      await subscription.unsubscribe()
-    }
-    return true
-  } catch {
-    return false
+export async function handleGetNotificationPreferences(
+  request: Request,
+  env: Env,
+  auth: AuthContext,
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  const rows = await sql(
+    `SELECT push_enabled, digest_email_enabled, notification_sound, digest_email_time
+     FROM notification_preferences
+     WHERE electrician_id = $1`,
+    [electricianId]
+  )
+
+  if (rows.length === 0) {
+    return json({
+      push_enabled: true,
+      digest_email_enabled: true,
+      notification_sound: true,
+      digest_email_time: '07:00',
+    }, 200, request)
   }
+
+  return json(rows[0], 200, request)
 }
 
-// Convert VAPID key from base64 string to Uint8Array
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
+/**
+ * PUT /api/settings/notifications
+ */
+export async function handleUpdateNotificationPreferences(
+  request: Request,
+  env: Env,
+  auth: AuthContext,
+): Promise<Response> {
+  const body = await validate(request, preferencesSchema)
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  const fields: string[] = []
+  const values: unknown[] = [electricianId]
+  let paramIndex = 2
+
+  if (body.push_enabled !== undefined) {
+    fields.push(`push_enabled = $${paramIndex++}`)
+    values.push(body.push_enabled)
   }
-  return outputArray
+  if (body.digest_email_enabled !== undefined) {
+    fields.push(`digest_email_enabled = $${paramIndex++}`)
+    values.push(body.digest_email_enabled)
+  }
+  if (body.notification_sound !== undefined) {
+    fields.push(`notification_sound = $${paramIndex++}`)
+    values.push(body.notification_sound)
+  }
+  if (body.digest_email_time !== undefined) {
+    fields.push(`digest_email_time = $${paramIndex++}`)
+    values.push(body.digest_email_time)
+  }
+
+  if (fields.length === 0) {
+    return json({ success: true }, 200, request)
+  }
+
+  fields.push('updated_at = NOW()')
+
+  await sql(
+    `UPDATE notification_preferences SET ${fields.join(', ')} WHERE electrician_id = $1`,
+    values
+  )
+
+  return json({ success: true }, 200, request)
 }
