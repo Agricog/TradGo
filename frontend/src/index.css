@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply min-h-screen;
+  }
+
+  /* Ensure bottom tab bar doesn't overlap content */
+  #root {
+    padding-bottom: 4rem;
+  }
+}
