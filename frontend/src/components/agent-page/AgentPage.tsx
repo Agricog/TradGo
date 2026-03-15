@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Zap, Send } from 'lucide-react'
 import ProfileHeader from './ProfileHeader'
 import ChatArea, { type ChatMessage } from './ChatArea'
+import AgentPageMeta from './AgentPageMeta'
 
 const AGENT_API = import.meta.env.VITE_AGENT_PUBLIC_API_URL || ''
 
@@ -40,6 +41,8 @@ function nextMsgId(): string {
 
 export default function AgentPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const isEmbed = searchParams.get('embed') === 'true'
   const [profile, setProfile] = useState<AgentProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -262,6 +265,7 @@ export default function AgentPage() {
   if (!profile.is_live) {
     return (
       <div className="min-h-screen bg-white">
+        <AgentPageMeta profile={profile} />
         <ProfileHeader profile={profile} />
         <div className="px-4 py-12 text-center">
           <p className="text-surface-900 font-medium mb-2">
@@ -287,9 +291,12 @@ export default function AgentPage() {
 
   // ========== Live agent page ==========
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Zone 1: Profile header */}
-      <ProfileHeader profile={profile} />
+    <div className={`${isEmbed ? 'h-screen' : 'min-h-screen'} bg-white flex flex-col`}>
+      {/* SEO meta tags — skip in embed */}
+      {!isEmbed && <AgentPageMeta profile={profile} />}
+
+      {/* Zone 1: Profile header — compact in embed */}
+      {!isEmbed && <ProfileHeader profile={profile} />}
 
       {/* Zone 2: Chat area */}
       <ChatArea messages={messages} typing={typing} firstName={profile.first_name} />
