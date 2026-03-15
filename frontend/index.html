@@ -6,21 +6,32 @@
     <meta name="robots" content="index, follow" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://*.clerk.accounts.dev https://*.clerk.dev; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://*.neon.tech https://*.workers.dev https://api.postcodes.io; worker-src 'self' blob:; frame-src https://*.clerk.accounts.dev https://*.clerk.dev; frame-ancestors 'none';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://*.clerk.accounts.dev https://*.clerk.dev https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://*.neon.tech https://*.workers.dev https://api.postcodes.io https://*.sentry.io https://api.stripe.com https://*.ably.io wss://*.ably.io https://*.up.railway.app; worker-src 'self' blob:; frame-src https://*.clerk.accounts.dev https://*.clerk.dev https://js.stripe.com https://checkout.stripe.com; frame-ancestors 'none';"
     />
     <meta name="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <title>TradGo — Your AI Agent for Electrical Enquiries</title>
-    <meta name="description" content="TradGo gives UK electricians a verified AI agent that catches missed enquiries, sends estimates, and books visits — so you can focus on the job." />
+    <meta
+      name="description"
+      content="TradGo gives UK electricians a verified AI agent that catches missed enquiries, sends estimates, and books visits — so you can focus on the job."
+    />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body class="bg-white text-surface-900 antialiased">
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: system-ui, sans-serif;">
+        <h1 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">TradGo requires JavaScript</h1>
+        <p style="color: #64748b; font-size: 0.875rem;">Please enable JavaScript in your browser to use TradGo.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
