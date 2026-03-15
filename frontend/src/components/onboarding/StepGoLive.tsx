@@ -78,8 +78,6 @@ export default function StepGoLive() {
     )
   }
 
-  const displayName = data?.business_name || data?.first_name || 'Your'
-
   return (
     <OnboardingLayout
       step={7}
