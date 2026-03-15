@@ -23,6 +23,7 @@ import StepVerify from './components/onboarding/StepVerify'
 import StepGoLive from './components/onboarding/StepGoLive'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import InboxList from './components/dashboard/inbox/InboxList'
+import ConversationDetail from './components/dashboard/inbox/ConversationDetail'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -87,10 +88,6 @@ function AgentTab() {
 
 function SettingsTab() {
   return <PlaceholderTab title="Settings" description="Account settings coming in Batch 15." />
-}
-
-function ConversationDetail() {
-  return <PlaceholderTab title="Conversation" description="Conversation detail coming in Batch 13." />
 }
 
 // ===========================================
