@@ -15,6 +15,7 @@ import {
   useAuth,
 } from '@clerk/clerk-react'
 import { Zap } from 'lucide-react'
+
 import StepYou from './components/onboarding/StepYou'
 import StepServices from './components/onboarding/StepServices'
 import StepPricing from './components/onboarding/StepPricing'
@@ -28,6 +29,9 @@ import StatsView from './components/dashboard/stats/StatsView'
 import AgentView from './components/dashboard/agent/AgentView'
 import SettingsView from './components/dashboard/settings/SettingsView'
 import AgentPage from './components/agent-page/AgentPage'
+import LandingPage from './components/pages/LandingPage'
+import PrivacyPage from './components/pages/PrivacyPage'
+import TermsPage from './components/pages/TermsPage'
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
 
@@ -40,7 +44,6 @@ if (!CLERK_PUBLISHABLE_KEY) {
 // ===========================================
 // Auth screen
 // ===========================================
-
 function AuthScreen() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-surface-50 px-4">
@@ -67,9 +70,8 @@ function AuthScreen() {
 }
 
 // ===========================================
-// Placeholder screens for unbuilt tabs
+// Dashboard tab wrappers
 // ===========================================
-
 function StatsTab() {
   return <StatsView />
 }
@@ -85,7 +87,6 @@ function SettingsTab() {
 // ===========================================
 // App shell — checks onboarding state
 // ===========================================
-
 function AppShell() {
   const api = useApi()
   const navigate = useNavigate()
@@ -97,13 +98,13 @@ function AppShell() {
 
   useEffect(() => {
     if (!isLoaded) return
-
     let cancelled = false
 
     async function checkUser() {
       try {
         const data = await api.get<MeResponse>('/api/me')
         if (cancelled) return
+
         setElectrician(data)
 
         if (!data.exists) {
@@ -186,13 +187,15 @@ function AppShell() {
 // ===========================================
 // Root app
 // ===========================================
-
 export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <BrowserRouter>
         <Routes>
-          {/* Public: customer-facing agent page — no auth required */}
+          {/* Public pages — no auth required */}
+          <Route path="/" element={<PublicOrDashboard />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="/agent/:slug" element={<AgentPage />} />
 
           {/* Everything else goes through auth */}
@@ -200,6 +203,22 @@ export default function App() {
         </Routes>
       </BrowserRouter>
     </ClerkProvider>
+  )
+}
+
+/**
+ * Show landing page to visitors, redirect to dashboard for signed-in users.
+ */
+function PublicOrDashboard() {
+  return (
+    <>
+      <SignedOut>
+        <LandingPage />
+      </SignedOut>
+      <SignedIn>
+        <Navigate to="/dashboard" replace />
+      </SignedIn>
+    </>
   )
 }
 
