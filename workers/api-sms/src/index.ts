@@ -1,4 +1,4 @@
-import { handleInboundSms } from './handlers/inbound'
+import { handleInboundMessage } from './handlers/inbound'
 
 export interface Env {
   NEON_DATABASE_URL: string
@@ -7,6 +7,8 @@ export interface Env {
   ANTHROPIC_API_KEY: string
   ENVIRONMENT: string
 }
+
+export type Channel = 'sms' | 'whatsapp'
 
 function corsHeaders(): Record<string, string> {
   return {
@@ -21,6 +23,17 @@ function json(data: unknown, status: number): Response {
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders() },
   })
+}
+
+/**
+ * Detect whatsapp: prefix and strip it.
+ * Twilio sends WhatsApp messages with "whatsapp:+44..." format.
+ */
+function parseChannelAndPhone(raw: string): { channel: Channel; phone: string } {
+  if (raw.startsWith('whatsapp:')) {
+    return { channel: 'whatsapp', phone: raw.replace('whatsapp:', '') }
+  }
+  return { channel: 'sms', phone: raw }
 }
 
 /**
@@ -75,7 +88,7 @@ export default {
       return json({ status: 'ok', service: 'tradgo-api-sms' }, 200)
     }
 
-    // Twilio inbound SMS webhook
+    // Twilio inbound webhook (handles both SMS and WhatsApp)
     if (url.pathname === '/api/sms/inbound' && request.method === 'POST') {
       // Validate Twilio signature in production
       if (env.ENVIRONMENT === 'production') {
@@ -90,25 +103,31 @@ export default {
         const body = await request.text()
         const params = new URLSearchParams(body)
 
-        const from = params.get('From') || ''
-        const to = params.get('To') || ''
+        const rawFrom = params.get('From') || ''
+        const rawTo = params.get('To') || ''
         const messageBody = params.get('Body') || ''
 
-        if (!from || !messageBody) {
+        if (!rawFrom || !messageBody) {
           return new Response(
             '<Response><Message>Sorry, something went wrong.</Message></Response>',
             { status: 200, headers: { 'Content-Type': 'text/xml' } }
           )
         }
 
-        const twiml = await handleInboundSms(env, from, to, messageBody)
+        // Detect channel from whatsapp: prefix
+        const { channel, phone: from } = parseChannelAndPhone(rawFrom)
+        const { phone: to } = parseChannelAndPhone(rawTo)
+
+        console.log(`Inbound ${channel} message from ${from} to ${to}`)
+
+        const twiml = await handleInboundMessage(env, from, to, messageBody, channel)
 
         return new Response(twiml, {
           status: 200,
           headers: { 'Content-Type': 'text/xml' },
         })
       } catch (err) {
-        console.error('Inbound SMS error:', err)
+        console.error('Inbound message error:', err)
         return new Response(
           '<Response><Message>Sorry, something went wrong. Please try again.</Message></Response>',
           { status: 200, headers: { 'Content-Type': 'text/xml' } }
