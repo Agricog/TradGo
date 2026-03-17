@@ -510,9 +510,7 @@ export default function LandingPage() {
             Questions electricians ask
           </h2>
           <div className="max-w-3xl mx-auto space-y-6">
-            {(STRUCTURED_DATA['@graph'].find((item): item is { '@type': string; mainEntity: Array<{ '@type': string; name: string; acceptedAnswer: { text: string } }> } =>
-              item['@type'] === 'FAQPage'
-            ))?.mainEntity.map((faq) => (
+            {(STRUCTURED_DATA['@graph'].find((item) => item['@type'] === 'FAQPage') as { mainEntity: Array<{ name: string; acceptedAnswer: { text: string } }> } | undefined)?.mainEntity.map((faq) => (
               <details key={faq.name} className="group bg-white rounded-xl border border-surface-100 overflow-hidden">
                 <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-left font-medium text-surface-900 hover:bg-surface-50 transition-colors">
                   {faq.name}
