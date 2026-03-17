@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /agent/
+
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /api/
+
+Sitemap: https://tradgo.co.uk/sitemap.xml
