@@ -32,7 +32,7 @@ export async function handleGetPublicProfile(
   const pageRows = await sql(
     `SELECT ap.electrician_id, ap.is_active, ap.slug,
             e.first_name, e.business_name, e.postcode, e.service_radius_miles,
-            e.agent_status, e.phone
+            e.agent_status, e.phone, e.whatsapp_number
      FROM agent_pages ap
      JOIN electricians e ON ap.electrician_id = e.id
      WHERE ap.slug = $1`,
@@ -76,6 +76,7 @@ export async function handleGetPublicProfile(
     area: page.postcode,
     service_radius_miles: page.service_radius_miles,
     phone: page.phone,
+    whatsapp_number: page.whatsapp_number || null,
     is_live: isLive,
     services: services.map((s: Record<string, unknown>) => s.category),
     badges: verifications.map((v: Record<string, unknown>) => ({
