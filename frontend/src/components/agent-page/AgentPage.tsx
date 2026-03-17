@@ -39,7 +39,7 @@ function detectContactType(value: string): 'phone' | 'email' | null {
  * Format phone for wa.me link — needs country code without +
  * e.g. +447123456789 → 447123456789
  */
-function formatWhatsAppLink(phone: string, firstName: string): string {
+function formatWhatsAppLink(phone: string): string {
   const cleaned = phone.replace(/[^0-9]/g, '')
   // If starts with 0, replace with 44 (UK)
   const international = cleaned.startsWith('0') ? `44${cleaned.slice(1)}` : cleaned
@@ -325,7 +325,7 @@ export default function AgentPage() {
         <div className="bg-white border-b border-surface-100 px-4 py-3">
           <div className="max-w-lg mx-auto">
             <a
-              href={formatWhatsAppLink(profile.whatsapp_number, profile.first_name)}
+              href={formatWhatsAppLink(profile.whatsapp_number)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-medium py-3 rounded-lg transition-colors"
