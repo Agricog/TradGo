@@ -1,30 +1,32 @@
 import { neon } from '@neondatabase/serverless'
-import type { Env } from '../index'
+import type { Env, Channel } from '../index'
 import { buildSystemPrompt, type ElectricianProfile } from './prompt-builder'
 import { parseAgentResponse } from './classifier'
 import { checkConversationRate, checkElectricianDailyRate } from './rate-limiter'
 
 /**
- * Handle an inbound SMS from Twilio.
+ * Handle an inbound message from Twilio (SMS or WhatsApp).
+ * Phone numbers should already have the whatsapp: prefix stripped.
  * Returns TwiML response string.
  */
-export async function handleInboundSms(
+export async function handleInboundMessage(
   env: Env,
   from: string,
   to: string,
-  messageBody: string
+  messageBody: string,
+  channel: Channel
 ): Promise<string> {
   const sql = neon(env.NEON_DATABASE_URL)
 
-  // 1. Identify electrician by Twilio number
+  // 1. Identify electrician by Twilio number or WhatsApp number
   const elecRows = await sql(
     `SELECT id, first_name, business_name, phone, agent_status
-     FROM electricians WHERE twilio_number = $1`,
+     FROM electricians WHERE twilio_number = $1 OR whatsapp_number = $1`,
     [to]
   )
 
   if (elecRows.length === 0) {
-    console.error(`No electrician found for Twilio number: ${to}`)
+    console.error(`No electrician found for number: ${to} (channel: ${channel})`)
     return twiml('Sorry, this number is not currently active.')
   }
 
@@ -69,8 +71,8 @@ export async function handleInboundSms(
 
     const newConv = await sql(
       `INSERT INTO conversations (electrician_id, channel, customer_phone, status)
-       VALUES ($1, 'sms', $2, 'active') RETURNING id`,
-      [electricianId, from]
+       VALUES ($1, $2, $3, 'active') RETURNING id`,
+      [electricianId, channel, from]
     )
     conversationId = newConv[0].id as string
   }
