@@ -676,7 +676,7 @@ export default function LandingPage() {
               <Zap className="h-5 w-5 text-brand-400" />
               <span className="font-bold text-white">TradGo</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-surface-400">
+            <div className="flex items-center gap-6 text-sm text-surface-300">
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
               <Link to="/dashboard" className="hover:text-white transition-colors">Sign in</Link>
