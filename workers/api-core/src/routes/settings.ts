@@ -1,13 +1,31 @@
+import { z } from 'zod'
 import { neon } from '@neondatabase/serverless'
 import type { Env } from '../index'
 import type { AuthContext } from '../middleware/auth'
 import { json, AppError } from '../utils/errors'
+import { validateBody } from '../utils/validation'
+
+// ===========================================
+// Schemas
+// ===========================================
+
+const reviewUrlSchema = z.object({
+  google_review_url: z.string().url().max(500).nullable(),
+})
+
+// ===========================================
+// Helpers
+// ===========================================
 
 async function getElectricianId(sql: ReturnType<typeof neon>, clerkId: string): Promise<string> {
   const rows = await sql('SELECT id FROM electricians WHERE clerk_id = $1', [clerkId])
   if (rows.length === 0) throw new AppError('Electrician not found', 404)
   return rows[0].id as string
 }
+
+// ===========================================
+// Handlers
+// ===========================================
 
 /**
  * GET /api/settings/channels
@@ -111,6 +129,49 @@ export async function handleGetAgentProfile(
     })),
     voice_duration: voiceRows[0]?.duration_seconds || null,
   }, 200, request)
+}
+
+/**
+ * GET /api/settings/review
+ * Returns the electrician's Google review URL.
+ */
+export async function handleGetReviewUrl(
+  request: Request,
+  env: Env,
+  auth: AuthContext,
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  const rows = await sql(
+    'SELECT google_review_url FROM electricians WHERE id = $1',
+    [electricianId]
+  )
+
+  return json({
+    google_review_url: rows[0]?.google_review_url || null,
+  }, 200, request)
+}
+
+/**
+ * PUT /api/settings/review
+ * Updates the electrician's Google review URL.
+ */
+export async function handleUpdateReviewUrl(
+  request: Request,
+  env: Env,
+  auth: AuthContext,
+): Promise<Response> {
+  const data = await validateBody(request, reviewUrlSchema)
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+
+  await sql(
+    'UPDATE electricians SET google_review_url = $1, updated_at = now() WHERE id = $2',
+    [data.google_review_url, electricianId]
+  )
+
+  return json({ success: true, google_review_url: data.google_review_url }, 200, request)
 }
 
 /**
