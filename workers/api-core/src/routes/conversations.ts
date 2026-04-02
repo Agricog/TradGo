@@ -323,7 +323,6 @@ export async function handleReply(
 
 /**
  * POST /api/conversations/:id/complete — Mark conversation as completed
- * Optionally sends a Google review request SMS to the customer.
  */
 export async function handleComplete(
   request: Request,
@@ -337,16 +336,32 @@ export async function handleComplete(
 
   await verifyConversationOwnership(sql, conversationId, electricianId)
 
-  // Mark conversation as completed
   await sql(
     `UPDATE conversations SET status = 'completed', job_status = 'completed' WHERE id = $1`,
     [conversationId]
   )
 
-  // Check if electrician has a Google review URL and conversation has a customer phone
+  return json({ success: true }, 200, request)
+}
+
+/**
+ * POST /api/conversations/:id/request-review — Send a Google review request to the customer
+ */
+export async function handleRequestReview(
+  request: Request,
+  env: Env,
+  auth: AuthContext,
+  params: Record<string, string>
+): Promise<Response> {
+  const sql = neon(env.NEON_DATABASE_URL)
+  const electricianId = await getElectricianId(sql, auth.userId)
+  const conversationId = params.id
+
+  await verifyConversationOwnership(sql, conversationId, electricianId)
+
   const rows = await sql(
     `SELECT e.first_name, e.business_name, e.google_review_url, e.twilio_number,
-            c.customer_phone, c.customer_name
+            c.customer_phone, c.customer_name, c.job_status
      FROM electricians e
      JOIN conversations c ON c.electrician_id = e.id
      WHERE c.id = $1 AND e.id = $2`,
@@ -354,28 +369,35 @@ export async function handleComplete(
   )
 
   if (rows.length === 0) {
-    return json({ success: true, review_sent: false }, 200, request)
+    return json({ success: false, review_sent: false, error: 'Conversation not found' }, 404, request)
   }
 
   const elec = rows[0]
+
+  if (elec.job_status === 'review_requested') {
+    return json({ success: true, review_sent: false, error: 'Review already requested' }, 200, request)
+  }
+
   const reviewUrl = elec.google_review_url as string | null
   const customerPhone = elec.customer_phone as string | null
   const twilioNumber = elec.twilio_number as string | null
+
+  if (!reviewUrl) {
+    return json({ success: false, review_sent: false, error: 'No Google review URL set. Add it in Settings.' }, 400, request)
+  }
+  if (!customerPhone || !twilioNumber) {
+    return json({ success: false, review_sent: false, error: 'Missing phone number' }, 400, request)
+  }
+
   const firstName = elec.first_name as string
   const businessName = elec.business_name as string | null
   const customerName = elec.customer_name as string | null
-
-  // Only send review request if we have all the pieces
-  if (!reviewUrl || !customerPhone || !twilioNumber) {
-    return json({ success: true, review_sent: false }, 200, request)
-  }
-
   const displayName = businessName || `${firstName}'s Electrical`
   const greeting = customerName ? `Hi ${customerName}` : 'Hi'
 
   const reviewMessage =
     `${greeting}, thanks for choosing ${displayName}. ` +
-    `If you were happy with the work, a quick Google review would really help us out — ` +
+    `If you were happy with the work, a quick Google review would really help us out \u2014 ` +
     `it only takes 30 seconds. ${reviewUrl}`
 
   const result = await sendSms(
