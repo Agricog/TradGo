@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Zap, MessageSquare, Shield, Clock, BarChart3, Bot, ArrowRight, CheckCircle2, Phone, Star, PhoneOff } from 'lucide-react'
+import { Zap, Shield, Clock, BarChart3, Bot, ArrowRight, CheckCircle2, Phone, PhoneOff } from 'lucide-react'
 
 // ============================================================
 // SEO: JSON-LD Structured Data
