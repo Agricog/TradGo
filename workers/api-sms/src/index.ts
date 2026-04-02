@@ -1,4 +1,5 @@
 import { handleInboundMessage } from './handlers/inbound'
+import { handleVoiceGreeting } from './handlers/voice-greeting'
 
 export interface Env {
   NEON_DATABASE_URL: string
@@ -130,6 +131,48 @@ export default {
         console.error('Inbound message error:', err)
         return new Response(
           '<Response><Message>Sorry, something went wrong. Please try again.</Message></Response>',
+          { status: 200, headers: { 'Content-Type': 'text/xml' } }
+        )
+      }
+    }
+
+    // Twilio voice webhook (missed call text-back)
+    if (url.pathname === '/api/sms/voice' && request.method === 'POST') {
+      // Validate Twilio signature in production
+      if (env.ENVIRONMENT === 'production') {
+        const valid = await validateTwilioSignature(request, env.TWILIO_AUTH_TOKEN)
+        if (!valid) {
+          console.error('Invalid Twilio signature — rejecting voice request')
+          return json({ error: 'Invalid signature' }, 403)
+        }
+      }
+
+      try {
+        const body = await request.text()
+        const params = new URLSearchParams(body)
+
+        const from = params.get('From') || ''
+        const to = params.get('To') || ''
+
+        if (!from || !to) {
+          return new Response(
+            '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Sorry, something went wrong.</Say><Hangup/></Response>',
+            { status: 200, headers: { 'Content-Type': 'text/xml' } }
+          )
+        }
+
+        console.log(`Inbound voice call from ${from} to ${to}`)
+
+        const twiml = await handleVoiceGreeting(env, from, to)
+
+        return new Response(twiml, {
+          status: 200,
+          headers: { 'Content-Type': 'text/xml' },
+        })
+      } catch (err) {
+        console.error('Voice greeting error:', err)
+        return new Response(
+          '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Sorry, we can\'t take your call right now. Please try again later.</Say><Hangup/></Response>',
           { status: 200, headers: { 'Content-Type': 'text/xml' } }
         )
       }
