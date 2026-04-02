@@ -5,7 +5,7 @@ import { json, errorResponse, handleError } from './utils/errors'
 import { checkRateLimit, getClientIp, rateLimitedResponse } from './middleware/rate-limiter'
 import { applySecurityHeaders } from './middleware/security-headers'
 import { handleGetVapidKey, handlePushSubscribe, handleGetNotificationPreferences, handleUpdateNotificationPreferences } from './routes/notifications'
-import { handleGetChannels, handleGetAgentProfile, handleDataExport } from './routes/settings'
+import { handleGetChannels, handleGetAgentProfile, handleDataExport, handleGetReviewUrl, handleUpdateReviewUrl } from './routes/settings'
 import { handleCreateCheckout, handleBillingPortal, handleBillingStatus, handleStripeWebhook } from './routes/billing'
 import {
   handleOnboardingDetails, handleOnboardingServices, handleGetServices,
@@ -132,6 +132,8 @@ const routes: Route[] = [
 
   // Settings
   { method: 'GET', pattern: /^\/api\/settings\/channels$/, handler: async (r, e, a) => handleGetChannels(r, e, a) },
+  { method: 'GET', pattern: /^\/api\/settings\/review$/, handler: async (r, e, a) => handleGetReviewUrl(r, e, a) },
+  { method: 'PUT', pattern: /^\/api\/settings\/review$/, handler: async (r, e, a) => handleUpdateReviewUrl(r, e, a) },
   { method: 'POST', pattern: /^\/api\/settings\/export$/, handler: async (r, e, a) => handleDataExport(r, e, a) },
 
   // Billing
