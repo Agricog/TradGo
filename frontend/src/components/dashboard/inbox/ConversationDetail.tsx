@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Phone, Info, Zap } from 'lucide-react'
+import { ArrowLeft, Phone, Info, Zap, Star } from 'lucide-react'
 import { useApi } from '@/hooks/useApi'
 import { useConversationActions } from '@/hooks/useConversationActions'
 import type { ConversationWithMessages } from '@/types'
@@ -21,6 +21,8 @@ export default function ConversationDetail() {
   const [showInfo, setShowInfo] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
+  const [reviewSending, setReviewSending] = useState(false)
+  const [reviewSent, setReviewSent] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -29,6 +31,9 @@ export default function ConversationDetail() {
     try {
       const data = await api.get<ConversationWithMessages>(`/api/conversations/${id}`)
       setConversation(data)
+      if (data.conversation?.job_status === 'review_requested') {
+        setReviewSent(true)
+      }
     } catch (err) {
       setError('Failed to load conversation')
     } finally {
@@ -76,6 +81,17 @@ export default function ConversationDetail() {
     setSending(false)
   }
 
+  const handleRequestReview = async () => {
+    if (reviewSending || reviewSent) return
+    setReviewSending(true)
+    const sent = await actions.requestReview()
+    if (sent) {
+      setReviewSent(true)
+      fetchConversation()
+    }
+    setReviewSending(false)
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -106,13 +122,16 @@ export default function ConversationDetail() {
     )
   }
 
-  const displayName = conversation.customer_name || conversation.customer_phone || 'Customer'
-  const jobLine = [conversation.job_type, conversation.job_location_postcode].filter(Boolean).join(' — ')
+  const conv = conversation.conversation || conversation
+  const displayName = conv.customer_name || conv.customer_phone || 'Customer'
+  const jobLine = [conv.job_type, conv.job_location_postcode].filter(Boolean).join(' — ')
   const pendingMessage = conversation.messages.find(
     (m) => m.role === 'agent' && m.classification === 'needs_approval' && !m.approved && !m.sent
   )
-  const isEscalated = conversation.status === 'escalated'
-  const customerPhone = conversation.customer_phone
+  const isEscalated = conv.status === 'escalated'
+  const isCompleted = conv.status === 'completed'
+  const customerPhone = conv.customer_phone
+  const jobStatus = conv.job_status
 
   return (
     <div className="fixed inset-0 z-50 bg-surface-50 flex flex-col">
@@ -159,7 +178,7 @@ export default function ConversationDetail() {
       {/* Escalation banner */}
       {isEscalated && (
         <EscalationBanner
-          reason={conversation.escalation_reason}
+          reason={conv.escalation_reason}
           customerPhone={customerPhone}
           onResolve={async () => {
             await actions.complete()
@@ -193,30 +212,54 @@ export default function ConversationDetail() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply input */}
-      <div className="bg-white border-t border-surface-200 px-4 py-3 shrink-0">
-        <div className="flex items-end gap-2">
-          <textarea
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a reply..."
-            rows={1}
-            className="flex-1 resize-none rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-          />
-          <button
-            type="button"
-            onClick={handleReply}
-            disabled={!replyText.trim() || sending}
-            className="shrink-0 bg-brand-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {sending ? 'Sending...' : 'Send'}
-          </button>
+      {/* Review request button for completed conversations */}
+      {isCompleted && customerPhone && (
+        <div className="bg-surface-50 border-t border-surface-200 px-4 py-3 shrink-0">
+          {reviewSent || jobStatus === 'review_requested' ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-brand-600">
+              <Star className="h-4 w-4 fill-brand-600" />
+              <span>Review request sent</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleRequestReview}
+              disabled={reviewSending}
+              className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Star className="h-4 w-4" />
+              {reviewSending ? 'Sending...' : 'Request Google review'}
+            </button>
+          )}
         </div>
-        <p className="text-[11px] text-surface-400 mt-1">
-          Sending a manual reply pauses the agent for this conversation for 24 hours.
-        </p>
-      </div>
+      )}
+
+      {/* Reply input — only show for non-completed conversations */}
+      {!isCompleted && (
+        <div className="bg-white border-t border-surface-200 px-4 py-3 shrink-0">
+          <div className="flex items-end gap-2">
+            <textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a reply..."
+              rows={1}
+              className="flex-1 resize-none rounded-lg border border-surface-300 px-3 py-2 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+            <button
+              type="button"
+              onClick={handleReply}
+              disabled={!replyText.trim() || sending}
+              className="shrink-0 bg-brand-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {sending ? 'Sending...' : 'Send'}
+            </button>
+          </div>
+          <p className="text-[11px] text-surface-400 mt-1">
+            Sending a manual reply pauses the agent for this conversation for 24 hours.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
