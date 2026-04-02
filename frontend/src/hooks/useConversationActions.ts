@@ -76,5 +76,21 @@ export function useConversationActions(conversationId: string) {
     [conversationId] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  return { approve, edit, reject, reply, complete }
+  const requestReview = useCallback(
+    async (): Promise<boolean> => {
+      try {
+        const result = await api.post<{ success: boolean; review_sent: boolean }>(
+          `/api/conversations/${conversationId}/request-review`,
+          {}
+        )
+        return result.review_sent
+      } catch (err) {
+        console.error('Request review failed:', err)
+        return false
+      }
+    },
+    [conversationId] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
+  return { approve, edit, reject, reply, complete, requestReview }
 }
