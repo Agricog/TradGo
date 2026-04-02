@@ -31,7 +31,7 @@ export default function ConversationDetail() {
     try {
       const data = await api.get<ConversationWithMessages>(`/api/conversations/${id}`)
       setConversation(data)
-      if (data.conversation?.job_status === 'review_requested') {
+     if ((data as any).job_status === 'review_requested') {
         setReviewSent(true)
       }
     } catch (err) {
@@ -122,7 +122,7 @@ export default function ConversationDetail() {
     )
   }
 
-  const conv = conversation.conversation || conversation
+const conv = conversation as any
   const displayName = conv.customer_name || conv.customer_phone || 'Customer'
   const jobLine = [conv.job_type, conv.job_location_postcode].filter(Boolean).join(' — ')
   const pendingMessage = conversation.messages.find(
