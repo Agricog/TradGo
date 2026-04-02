@@ -15,7 +15,7 @@ import {
 } from './routes/onboarding'
 import {
   handleListConversations, handleGetConversation,
-  handleApprove, handleEdit, handleReject, handleReply, handleComplete,
+  handleApprove, handleEdit, handleReject, handleReply, handleComplete, handleRequestReview,
 } from './routes/conversations'
 import {
   handleGetAgentStatus, handleUpdateAgentStatus,
@@ -105,6 +105,7 @@ const routes: Route[] = [
   { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/reject$/, handler: async (r, e, a, p) => handleReject(r, e, a, p) },
   { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/reply$/, handler: async (r, e, a, p) => handleReply(r, e, a, p) },
   { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/complete$/, handler: async (r, e, a, p) => handleComplete(r, e, a, p) },
+  { method: 'POST', pattern: /^\/api\/conversations\/(?<id>[a-f0-9-]+)\/request-review$/, handler: async (r, e, a, p) => handleRequestReview(r, e, a, p) },
 
   // Agent
   { method: 'GET', pattern: /^\/api\/agent\/status$/, handler: async (r, e, a) => handleGetAgentStatus(r, e, a) },
