@@ -58,14 +58,12 @@ export async function handleVoiceGreeting(
   const voiceMessage =
     `Hi, thanks for calling ${displayName}. ` +
     `${firstName} is on a job right now and can't get to the phone. ` +
-    `I'm sending you a text message now so we can get your job sorted straight away.`
+    `I'm sending you a text message now so we can get back to you.`
 
-  // 4. Fire the SMS in the background
-  // We don't await this — the voice response returns immediately
-  // The SMS creates a new conversation via the normal inbound flow when the customer replies
+  // 4. Send the SMS
   const smsBody =
-    `Hi, it's ${displayName}. Sorry ${firstName} couldn't get to the phone — ` +
-    `he's on a job right now. Tell me what you need and I'll get you a price straight away.`
+    `Hi, it's ${displayName}. Sorry ${firstName} couldn't get to the phone \u2014 ` +
+    `he's on a job right now. Drop me a quick message about what you need and we'll get back to you.`
 
   // Send SMS before returning voice response
   // Must await — Cloudflare Workers terminate after response is sent
