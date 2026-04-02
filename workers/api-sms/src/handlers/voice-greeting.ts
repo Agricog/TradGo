@@ -67,10 +67,13 @@ export async function handleVoiceGreeting(
     `Hi, it's ${displayName}. Sorry ${firstName} couldn't get to the phone — ` +
     `he's on a job right now. Tell me what you need and I'll get you a price straight away.`
 
-  // Send SMS asynchronously — don't block the voice response
-  sendInitialSms(env, sql, electricianId, twilioNumber, from, smsBody).catch((err) => {
+  // Send SMS before returning voice response
+  // Must await — Cloudflare Workers terminate after response is sent
+  try {
+    await sendInitialSms(env, sql, electricianId, twilioNumber, from, smsBody)
+  } catch (err) {
     console.error('Failed to send missed-call SMS:', err)
-  })
+  }
 
   return voiceTwiml(voiceMessage, true)
 }
