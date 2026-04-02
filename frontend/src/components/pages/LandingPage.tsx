@@ -190,8 +190,8 @@ const FEATURES = [
   },
   {
     icon: Phone,
-    title: 'SMS, WhatsApp, and web chat',
-    description: 'Customers contact you however they prefer. All channels feed into one inbox on your dashboard. Nothing slips through.',
+    title: 'SMS, WhatsApp, and your website',
+    description: 'Customers contact you however they prefer. Plus you get a chat widget for your existing website — one line of code and your AI agent is live on your site. All channels feed into one inbox.',
   },
   {
     icon: Clock,
@@ -215,7 +215,7 @@ const INCLUDED = [
   'Missed call text-back',
   'AI agent trained on your voice',
   'SMS and WhatsApp',
-  'Website chat widget',
+  'Chat widget for your existing website',
   'Dashboard and inbox',
   'Approval flow on estimates',
   'Google review requests',
