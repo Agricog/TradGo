@@ -443,7 +443,7 @@ export default function LandingPage() {
 
       {/* PROBLEM / SOLUTION */}
       <section className="bg-gradient-to-b from-surface-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
               Every missed call is a job lost
@@ -456,7 +456,7 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES */}
-      <section className="py-14 sm:py-20 bg-white">
+      <section className="py-10 sm:py-14 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
