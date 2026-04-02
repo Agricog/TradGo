@@ -323,6 +323,7 @@ export async function handleReply(
 
 /**
  * POST /api/conversations/:id/complete — Mark conversation as completed
+ * Optionally sends a Google review request SMS to the customer.
  */
 export async function handleComplete(
   request: Request,
@@ -336,10 +337,58 @@ export async function handleComplete(
 
   await verifyConversationOwnership(sql, conversationId, electricianId)
 
+  // Mark conversation as completed
   await sql(
-    `UPDATE conversations SET status = 'completed' WHERE id = $1`,
+    `UPDATE conversations SET status = 'completed', job_status = 'completed' WHERE id = $1`,
     [conversationId]
   )
 
-  return json({ success: true }, 200, request)
+  // Check if electrician has a Google review URL and conversation has a customer phone
+  const rows = await sql(
+    `SELECT e.first_name, e.business_name, e.google_review_url, e.twilio_number,
+            c.customer_phone, c.customer_name
+     FROM electricians e
+     JOIN conversations c ON c.electrician_id = e.id
+     WHERE c.id = $1 AND e.id = $2`,
+    [conversationId, electricianId]
+  )
+
+  if (rows.length === 0) {
+    return json({ success: true, review_sent: false }, 200, request)
+  }
+
+  const elec = rows[0]
+  const reviewUrl = elec.google_review_url as string | null
+  const customerPhone = elec.customer_phone as string | null
+  const twilioNumber = elec.twilio_number as string | null
+  const firstName = elec.first_name as string
+  const businessName = elec.business_name as string | null
+  const customerName = elec.customer_name as string | null
+
+  // Only send review request if we have all the pieces
+  if (!reviewUrl || !customerPhone || !twilioNumber) {
+    return json({ success: true, review_sent: false }, 200, request)
+  }
+
+  const displayName = businessName || `${firstName}'s Electrical`
+  const greeting = customerName ? `Hi ${customerName}` : 'Hi'
+
+  const reviewMessage =
+    `${greeting}, thanks for choosing ${displayName}. ` +
+    `If you were happy with the work, a quick Google review would really help us out — ` +
+    `it only takes 30 seconds. ${reviewUrl}`
+
+  const result = await sendSms(
+    env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN,
+    twilioNumber, customerPhone, reviewMessage
+  )
+
+  if (result.success) {
+    await sql(
+      `UPDATE conversations SET job_status = 'review_requested' WHERE id = $1`,
+      [conversationId]
+    )
+  }
+
+  return json({ success: true, review_sent: result.success }, 200, request)
 }
