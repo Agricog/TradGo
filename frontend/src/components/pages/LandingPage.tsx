@@ -427,12 +427,17 @@ export default function LandingPage() {
 
       {/* SOCIAL PROOF BAR */}
       <section className="bg-surface-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-wrap items-center justify-center gap-8 text-sm text-surface-300">
-          <span className="text-white font-medium">Built for UK electricians</span>
-          <span>Missed call text-back</span>
-          <span>SMS + WhatsApp</span>
-          <span>NICEIC / NAPIT verified</span>
-          <span>£59/month — everything included</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-xl sm:text-2xl font-bold text-white mb-3">Built for UK electricians</p>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-surface-300">
+            <span>Missed call text-back</span>
+            <span className="text-surface-500">·</span>
+            <span>SMS + WhatsApp</span>
+            <span className="text-surface-500">·</span>
+            <span>NICEIC / NAPIT verified</span>
+            <span className="text-surface-500">·</span>
+            <span>£59/month — everything included</span>
+          </div>
         </div>
       </section>
 
