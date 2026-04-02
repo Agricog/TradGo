@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Zap, MessageSquare, Shield, Clock, BarChart3, Bot, ArrowRight, CheckCircle2, Phone, Star } from 'lucide-react'
+import { Zap, MessageSquare, Shield, Clock, BarChart3, Bot, ArrowRight, CheckCircle2, Phone, Star, PhoneOff } from 'lucide-react'
 
 // ============================================================
-// SEO: JSON-LD Structured Data (Point 11)
+// SEO: JSON-LD Structured Data
 // ============================================================
 const STRUCTURED_DATA = {
   '@context': 'https://schema.org',
@@ -14,7 +14,7 @@ const STRUCTURED_DATA = {
       name: 'TradGo',
       url: 'https://tradgo.co.uk',
       logo: 'https://tradgo.co.uk/favicon.svg',
-      description: 'TradGo provides UK electricians with a verified AI agent that handles customer enquiries, generates estimates, and books visits via SMS and WhatsApp.',
+      description: 'TradGo gives UK electricians an AI agent that catches missed calls, handles customer enquiries via SMS and WhatsApp, generates estimates, and books site visits automatically.',
       foundingDate: '2026',
       areaServed: { '@type': 'Country', name: 'United Kingdom' },
       sameAs: [],
@@ -23,8 +23,8 @@ const STRUCTURED_DATA = {
       '@type': 'WebPage',
       '@id': 'https://tradgo.co.uk/#webpage',
       url: 'https://tradgo.co.uk',
-      name: 'TradGo — AI Agent for UK Electricians | Never Miss an Enquiry',
-      description: 'TradGo gives UK electricians a verified AI agent that answers customer enquiries 24/7, sends estimates, and books visits — so you never lose work to a missed call again.',
+      name: 'TradGo — AI Agent for UK Electricians | Never Miss a Job Again',
+      description: 'TradGo catches missed calls, texts your customer back instantly, and handles the conversation — qualifying the job, giving estimates, and booking visits while you work. £59/month. 14-day free trial.',
       isPartOf: { '@id': 'https://tradgo.co.uk/#organization' },
       speakable: {
         '@type': 'SpeakableSpecification',
@@ -38,17 +38,17 @@ const STRUCTURED_DATA = {
       operatingSystem: 'Web',
       offers: {
         '@type': 'Offer',
-        price: '0',
+        price: '59',
         priceCurrency: 'GBP',
-        description: 'Free trial available',
+        priceSpecification: {
+          '@type': 'UnitPriceSpecification',
+          price: '59',
+          priceCurrency: 'GBP',
+          billingDuration: 'P1M',
+          description: '14-day free trial. Cancel anytime.',
+        },
       },
-      description: 'AI-powered customer enquiry management for UK electricians. Handles SMS and WhatsApp messages, provides estimates, and books visits automatically.',
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.9',
-        ratingCount: '12',
-        bestRating: '5',
-      },
+      description: 'AI-powered missed call text-back and customer enquiry management for UK electricians. Catches missed calls, handles SMS and WhatsApp messages, provides estimates, and books visits automatically.',
     },
     {
       '@type': 'FAQPage',
@@ -58,7 +58,15 @@ const STRUCTURED_DATA = {
           name: 'What is TradGo?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'TradGo is an AI agent built specifically for UK electricians. It answers customer enquiries 24/7 via SMS and WhatsApp, provides accurate estimates based on your pricing, and books site visits — so you never miss work because you were on a job.',
+            text: 'TradGo is an AI agent built specifically for UK electricians. When you miss a call, TradGo texts the customer back within seconds, qualifies the job, gives an estimate, and books a visit — all while you keep working. It also handles WhatsApp messages and website enquiries.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'How does the missed call text-back work?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'You set your phone to forward unanswered calls to your TradGo number. When you miss a call, TradGo plays a short message telling the customer a text is on its way, then immediately sends them an SMS. The AI agent handles the conversation from there. You keep your existing number — nothing changes on your van or cards.',
           },
         },
         {
@@ -90,7 +98,7 @@ const STRUCTURED_DATA = {
           name: 'Does TradGo work with WhatsApp?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Yes. TradGo supports both SMS and WhatsApp through the same conversation engine. Customers can message you on whichever channel they prefer and the agent handles both identically.',
+            text: 'Yes. TradGo supports SMS, WhatsApp, and a website chat widget. Customers can message you on whichever channel they prefer and the agent handles all three identically through one inbox.',
           },
         },
         {
@@ -98,7 +106,15 @@ const STRUCTURED_DATA = {
           name: 'How much does TradGo cost?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'TradGo offers a free trial so you can test the full product with real customers. After that, pricing is based on usage. There are no setup fees and you can cancel anytime.',
+            text: 'TradGo is £59 per month with a 14-day free trial. Everything is included — missed call text-back, SMS, WhatsApp, website chat widget, dashboard, and the AI agent. No setup fees, no minute limits, no overage charges. Cancel anytime.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Do I need to change my phone number?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'No. You keep your existing number on everything — van, cards, Google listing. You just set your phone to forward unanswered calls to TradGo. That\'s the only change. Takes 30 seconds.',
           },
         },
         {
@@ -122,7 +138,7 @@ const STRUCTURED_DATA = {
           name: 'How long does it take to set up TradGo?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Most electricians complete onboarding in under 10 minutes. You enter your details, services, and pricing — then your AI agent goes live immediately. You can start receiving customer enquiries the same day.',
+            text: 'Most electricians complete onboarding in under 10 minutes. You enter your details, services, and pricing — then your AI agent goes live immediately. The only other step is setting call forwarding on your phone, which takes 30 seconds.',
           },
         },
         {
@@ -139,9 +155,9 @@ const STRUCTURED_DATA = {
       '@type': 'HowTo',
       name: 'How to Set Up TradGo',
       step: [
-        { '@type': 'HowToStep', position: 1, name: 'Sign up', text: 'Create your account and enter your business details, location, and service radius.' },
-        { '@type': 'HowToStep', position: 2, name: 'Add your services', text: 'Select the electrical services you offer and set your pricing ranges or day rates.' },
-        { '@type': 'HowToStep', position: 3, name: 'Go live', text: 'Your AI agent goes live with its own page and phone number. Share it with customers and start receiving enquiries.' },
+        { '@type': 'HowToStep', position: 1, name: 'Sign up', text: 'Create your account and enter your business details, services, and pricing ranges. Takes about 10 minutes.' },
+        { '@type': 'HowToStep', position: 2, name: 'Set call forwarding', text: 'Set your phone to forward unanswered calls to your TradGo number. Keep your existing number on everything.' },
+        { '@type': 'HowToStep', position: 3, name: 'Start catching jobs', text: 'Every missed call gets a text back within seconds. The AI agent qualifies, prices, and books — you review everything in your dashboard.' },
       ],
     },
     {
@@ -158,9 +174,14 @@ const STRUCTURED_DATA = {
 // ============================================================
 const FEATURES = [
   {
-    icon: MessageSquare,
-    title: 'Never miss an enquiry',
-    description: 'Your AI agent answers customer texts and WhatsApp messages instantly — even when you\'re up a ladder or under a floor.',
+    icon: PhoneOff,
+    title: 'Missed call? Sorted.',
+    description: 'When you can\'t answer, TradGo texts the customer back within seconds. They stop Googling your competitors and start a conversation with you instead.',
+  },
+  {
+    icon: Bot,
+    title: 'Sounds like you, not a robot',
+    description: 'The agent learns your tone, your services, and your pricing. Customers get a response that sounds like it came from you — because it was trained on you.',
   },
   {
     icon: Shield,
@@ -168,9 +189,9 @@ const FEATURES = [
     description: 'Estimates and pricing always go through your approval. Simple questions get answered automatically. Emergencies get escalated to you immediately.',
   },
   {
-    icon: Bot,
-    title: 'Speaks in your voice',
-    description: 'The agent learns your tone, your services, and your pricing. Customers get a response that sounds like it came from you — because it was trained on you.',
+    icon: Phone,
+    title: 'SMS, WhatsApp, and web chat',
+    description: 'Customers contact you however they prefer. All channels feed into one inbox on your dashboard. Nothing slips through.',
   },
   {
     icon: Clock,
@@ -182,26 +203,33 @@ const FEATURES = [
     title: 'See what\'s coming in',
     description: 'Your dashboard shows every conversation, estimate, and booking in one place. Filter by status, see what needs your attention, and track your pipeline.',
   },
-  {
-    icon: Phone,
-    title: 'SMS and WhatsApp',
-    description: 'Customers contact you however they prefer. Both channels feed into the same conversation engine and appear in one unified inbox.',
-  },
 ]
 
 const STEPS = [
   { number: '1', title: 'Sign up and set your services', description: 'Enter your details, the electrical work you do, and your pricing. Takes about 10 minutes.' },
-  { number: '2', title: 'Your agent goes live', description: 'You get a personal agent page with your own URL and phone number. Share it on your van, your cards, your social media.' },
-  { number: '3', title: 'Customers get instant replies', description: 'When someone texts or WhatsApps, your agent handles the conversation — asking the right questions, giving estimates, and booking visits.' },
+  { number: '2', title: 'Set call forwarding on your phone', description: 'One setting change — forward unanswered calls to your TradGo number. Your existing number stays on your van, your cards, everywhere. Nothing changes.' },
+  { number: '3', title: 'Start catching the jobs you\'re missing', description: 'Every missed call gets a text back within seconds. Your AI agent qualifies the job, gives an estimate, and books a visit. You just approve and show up.' },
+]
+
+const INCLUDED = [
+  'Missed call text-back',
+  'AI agent trained on your voice',
+  'SMS and WhatsApp',
+  'Website chat widget',
+  'Dashboard and inbox',
+  'Approval flow on estimates',
+  'Google review requests',
+  'Emergency escalation',
+  'Learning loop — gets smarter daily',
+  'No minute limits or overage charges',
 ]
 
 // ============================================================
 // Component
 // ============================================================
 export default function LandingPage() {
-  // SEO: Points 1-5 (meta tags set via useEffect for SPA)
   useEffect(() => {
-    document.title = 'TradGo — AI Agent for UK Electricians | Never Miss an Enquiry'
+    document.title = 'TradGo — AI Agent for UK Electricians | Never Miss a Job Again'
 
     const setMeta = (name: string, content: string, property = false) => {
       const attr = property ? 'property' : 'name'
@@ -214,9 +242,7 @@ export default function LandingPage() {
       el.setAttribute('content', content)
     }
 
-    // Point 2: Meta description
-    setMeta('description', 'TradGo gives UK electricians a verified AI agent that answers customer enquiries 24/7, sends estimates, and books visits. Never lose work to a missed call again. Free trial.')
-    // Point 3: Canonical
+    setMeta('description', 'TradGo catches missed calls, texts your customer back instantly, and handles the conversation — qualifying the job, giving estimates, and booking visits. Built for UK electricians. £59/month. 14-day free trial.')
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement
     if (!canonical) {
       canonical = document.createElement('link')
@@ -224,19 +250,16 @@ export default function LandingPage() {
       document.head.appendChild(canonical)
     }
     canonical.href = 'https://tradgo.co.uk'
-    // Points 6-9: OG + Twitter
     setMeta('og:type', 'website', true)
-    setMeta('og:title', 'TradGo — AI Agent for UK Electricians | Never Miss an Enquiry', true)
-    setMeta('og:description', 'Your AI agent answers customer enquiries 24/7, sends estimates, and books visits. Built for UK electricians.', true)
+    setMeta('og:title', 'TradGo — AI Agent for UK Electricians | Never Miss a Job Again', true)
+    setMeta('og:description', 'Missed a call? TradGo texts your customer back in seconds. AI agent handles enquiries, gives estimates, books visits. £59/month.', true)
     setMeta('og:url', 'https://tradgo.co.uk', true)
     setMeta('og:image', 'https://tradgo.co.uk/og-image.jpg', true)
     setMeta('twitter:card', 'summary_large_image')
     setMeta('twitter:title', 'TradGo — AI Agent for UK Electricians')
-    setMeta('twitter:description', 'Never miss an enquiry. Your AI agent handles customer texts and WhatsApp 24/7.')
-    // Point 10: Author
+    setMeta('twitter:description', 'Missed a call? TradGo texts your customer back in seconds. £59/month. 14-day free trial.')
     setMeta('author', 'TradGo')
 
-    // Point 11: Structured data
     let script = document.querySelector('#ld-json') as HTMLScriptElement
     if (!script) {
       script = document.createElement('script')
@@ -254,9 +277,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ============================================================ */}
       {/* NAV */}
-      {/* ============================================================ */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-surface-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -266,6 +287,9 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <a href="#how-it-works" className="hidden sm:block text-sm text-surface-600 hover:text-surface-900 transition-colors">
               How it works
+            </a>
+            <a href="#pricing" className="hidden sm:block text-sm text-surface-600 hover:text-surface-900 transition-colors">
+              Pricing
             </a>
             <a href="#faq" className="hidden sm:block text-sm text-surface-600 hover:text-surface-900 transition-colors">
               FAQ
@@ -286,29 +310,26 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ============================================================ */}
-      {/* HERO (Point 12: H1 unique, Point 14: Quick Answer) */}
-      {/* ============================================================ */}
+      {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-emerald-50" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-24 sm:pb-28">
           <div className="max-w-3xl">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-surface-900 tracking-tight leading-[1.1]">
-              Your AI agent answers&nbsp;enquiries while you're on&nbsp;the&nbsp;job
+              Never miss a job&nbsp;again
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-surface-600 leading-relaxed max-w-2xl">
-              TradGo gives UK electricians a verified AI agent that handles customer texts and WhatsApp messages 24/7 — sending estimates, answering questions, and booking visits so you never lose work to a missed call again.
+              Can't answer the phone? TradGo texts your customer back within seconds — qualifies the job, gives an estimate, and books a visit. All while you keep working.
             </p>
-            {/* Point 14: Quick Answer Box */}
             <p id="quick-answer" className="sr-only">
-              TradGo is an AI agent for UK electricians that answers customer enquiries via SMS and WhatsApp, provides estimates, and books visits automatically.
+              TradGo is an AI agent for UK electricians that catches missed calls, texts customers back instantly, handles enquiries via SMS and WhatsApp, and books site visits automatically.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
                 to="/dashboard"
                 className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3.5 rounded-xl text-base transition-colors shadow-sm"
               >
-                Start your free trial
+                Start your 14-day free trial
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a
@@ -318,8 +339,9 @@ export default function LandingPage() {
                 See how it works
               </a>
             </div>
-            <div className="mt-8 flex items-center gap-6 text-sm text-surface-500">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> No credit card required</span>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-surface-500">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> 14-day free trial</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Keep your existing number</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Live in 10 minutes</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Cancel anytime</span>
             </div>
@@ -327,52 +349,40 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* SOCIAL PROOF BAR */}
-      {/* ============================================================ */}
       <section className="border-y border-surface-100 bg-surface-50/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-wrap items-center justify-center gap-8 text-sm text-surface-500">
-          <span className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-            <span className="ml-1 text-surface-700 font-medium">Built for UK sparkies</span>
-          </span>
+          <span className="text-surface-700 font-medium">Built for UK electricians</span>
+          <span>Missed call text-back</span>
           <span>SMS + WhatsApp</span>
           <span>NICEIC / NAPIT verified</span>
-          <span>Instant setup</span>
+          <span>£59/month — everything included</span>
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* PROBLEM / SOLUTION */}
-      {/* ============================================================ */}
       <section className="py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
-              Every missed call is lost work
+              Every missed call is a job lost
             </h2>
             <p className="mt-4 text-lg text-surface-600 leading-relaxed">
-              You're on a job. The phone buzzes. You can't answer. By the time you call back, they've found someone else. TradGo makes sure that never happens again — your AI agent picks up every enquiry the moment it comes in.
+              You're up a ladder. The phone rings. You can't answer. By the time you call back, they've booked someone else. 85% of customers who can't reach you won't leave a voicemail — they just call the next electrician on Google. TradGo stops that from happening.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/* FEATURES (Point 12: H2-H4 hierarchy) */}
-      {/* ============================================================ */}
+      {/* FEATURES */}
       <section className="py-16 sm:py-24 bg-surface-50/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
-              Everything an electrician needs
+              Everything you need. Nothing you don't.
             </h2>
             <p className="mt-4 text-lg text-surface-600 max-w-2xl mx-auto">
-              Built specifically for the trades — not a generic chatbot slapped onto a website.
+              Built specifically for electricians — not a generic chatbot slapped onto a website.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -389,9 +399,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* HOW IT WORKS */}
-      {/* ============================================================ */}
       <section id="how-it-works" className="py-16 sm:py-24 scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -424,9 +432,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* CLASSIFICATION EXPLAINER */}
-      {/* ============================================================ */}
       <section className="py-16 sm:py-24 bg-surface-50/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
@@ -469,9 +475,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* VERIFIED CREDENTIALS */}
-      {/* ============================================================ */}
       <section className="py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
@@ -485,9 +489,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* THE LEARNING LOOP */}
-      {/* ============================================================ */}
       <section className="py-16 sm:py-24 bg-surface-50/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
@@ -495,16 +497,56 @@ export default function LandingPage() {
               Gets smarter every day
             </h2>
             <p className="mt-4 text-lg text-surface-600 leading-relaxed">
-              Every time you edit an agent response or add a rule, TradGo learns. The more you use it, the fewer edits you need. After a few weeks, most electricians tell us the agent gets it right first time on 90% of enquiries. It analyses your edit patterns overnight and suggests new rules to make itself more accurate. You approve the ones that make sense, dismiss the rest. Your agent gets better without you having to think about it.
+              Every time you edit an agent response or add a rule, TradGo learns. The more you use it, the fewer edits you need. After a few weeks, the agent gets it right first time on most enquiries. It analyses your edit patterns overnight and suggests new rules to make itself more accurate. You approve the ones that make sense, dismiss the rest. Your agent gets better without you having to think about it.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/* FAQ (Point 13) */}
-      {/* ============================================================ */}
-      <section id="faq" className="py-16 sm:py-24 scroll-mt-20">
+      {/* PRICING */}
+      <section id="pricing" className="py-16 sm:py-24 scroll-mt-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
+              Simple pricing. No surprises.
+            </h2>
+            <p className="mt-4 text-lg text-surface-600">
+              One plan. Everything included. One missed job pays for the whole year.
+            </p>
+          </div>
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl border-2 border-brand-600 p-8 sm:p-10 shadow-sm">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-surface-900">TradGo Solo</h3>
+                <div className="mt-4 flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-extrabold text-surface-900">£59</span>
+                  <span className="text-lg text-surface-500">/month</span>
+                </div>
+                <p className="mt-2 text-sm text-brand-600 font-medium">14-day free trial — no card required</p>
+              </div>
+              <ul className="mt-8 space-y-3">
+                {INCLUDED.map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-brand-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-surface-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to="/dashboard"
+                className="mt-8 w-full inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors"
+              >
+                Start your free trial
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <p className="mt-3 text-center text-xs text-surface-400">No setup fees. No contracts. Cancel anytime.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-16 sm:py-24 bg-surface-50/50 scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-surface-900 text-center mb-12">
             Questions electricians ask
@@ -525,31 +567,27 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================ */}
       {/* FINAL CTA */}
-      {/* ============================================================ */}
       <section className="py-16 sm:py-24 bg-brand-600">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Stop losing work to missed calls
+            Stop losing jobs to missed calls
           </h2>
           <p className="mt-4 text-lg text-brand-100 max-w-2xl mx-auto">
-            Set up your AI agent in 10 minutes. Start getting instant replies to every customer enquiry — on SMS and WhatsApp.
+            Set up your AI agent in 10 minutes. Every missed call becomes a conversation. Every conversation becomes a job.
           </p>
           <Link
             to="/dashboard"
             className="mt-8 inline-flex items-center gap-2 bg-white hover:bg-surface-50 text-brand-700 font-semibold px-8 py-4 rounded-xl text-lg transition-colors"
           >
-            Start your free trial
+            Start your 14-day free trial
             <ArrowRight className="h-5 w-5" />
           </Link>
-          <p className="mt-4 text-sm text-brand-200">No credit card needed. Cancel anytime.</p>
+          <p className="mt-4 text-sm text-brand-200">£59/month after trial. No card needed to start. Cancel anytime.</p>
         </div>
       </section>
 
-      {/* ============================================================ */}
-      {/* FOOTER (Point 15: internal links) */}
-      {/* ============================================================ */}
+      {/* FOOTER */}
       <footer className="border-t border-surface-100 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
