@@ -225,6 +225,75 @@ const INCLUDED = [
 ]
 
 // ============================================================
+// Phone mockup component
+// ============================================================
+function PhoneMockup() {
+  return (
+    <div className="relative mx-auto w-[280px] sm:w-[320px]">
+      {/* Phone frame */}
+      <div className="rounded-[2.5rem] border-[8px] border-surface-800 bg-surface-900 p-1 shadow-2xl">
+        {/* Notch */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-surface-800 rounded-b-2xl z-10" />
+        {/* Screen */}
+        <div className="rounded-[2rem] bg-white overflow-hidden pt-8">
+          {/* Status bar */}
+          <div className="px-5 pb-2 flex items-center justify-between text-[10px] text-surface-400">
+            <span>14:21</span>
+            <span>5G</span>
+          </div>
+          {/* Missed call banner */}
+          <div className="mx-3 mb-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
+                <PhoneOff className="h-3 w-3 text-red-500" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-red-700">Missed call</p>
+                <p className="text-[10px] text-red-500">07985 559 775 · just now</p>
+              </div>
+            </div>
+          </div>
+          {/* Text conversation */}
+          <div className="px-3 space-y-2.5 pb-4">
+            {/* TradGo message */}
+            <div className="flex justify-start">
+              <div className="bg-brand-600 text-white rounded-2xl rounded-tl-md px-3.5 py-2.5 max-w-[85%] shadow-sm">
+                <p className="text-[11px] leading-relaxed">Hi, it's Dave's Electrical. Sorry Dave couldn't get to the phone — he's on a job right now. Drop me a quick message about what you need and we'll get back to you.</p>
+                <p className="text-[9px] text-brand-200 mt-1">14:21</p>
+              </div>
+            </div>
+            {/* Customer reply */}
+            <div className="flex justify-end">
+              <div className="bg-surface-100 text-surface-800 rounded-2xl rounded-tr-md px-3.5 py-2.5 max-w-[85%]">
+                <p className="text-[11px] leading-relaxed">Hi, I need a consumer unit replaced in my house</p>
+                <p className="text-[9px] text-surface-400 mt-1 text-right">14:22</p>
+              </div>
+            </div>
+            {/* Agent response */}
+            <div className="flex justify-start">
+              <div className="bg-brand-600 text-white rounded-2xl rounded-tl-md px-3.5 py-2.5 max-w-[85%] shadow-sm">
+                <p className="text-[11px] leading-relaxed">No problem. Where's the job located, and is it a house or a flat?</p>
+                <p className="text-[9px] text-brand-200 mt-1">14:22</p>
+              </div>
+            </div>
+            {/* Typing indicator */}
+            <div className="flex justify-end">
+              <div className="bg-surface-100 rounded-2xl px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-surface-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="h-1.5 w-1.5 rounded-full bg-surface-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="h-1.5 w-1.5 rounded-full bg-surface-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
 // Component
 // ============================================================
 export default function LandingPage() {
@@ -313,46 +382,53 @@ export default function LandingPage() {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-emerald-50" />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-24 sm:pb-28">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-surface-900 tracking-tight leading-[1.1]">
-              Never miss a job&nbsp;again
-            </h1>
-            <p className="mt-6 text-lg sm:text-xl text-surface-600 leading-relaxed max-w-2xl">
-              Can't answer the phone? TradGo texts your customer back within seconds — finds out what they need, gives them a ballpark, and keeps them warm until you're free.
-            </p>
-            <p id="quick-answer" className="sr-only">
-              TradGo is an AI agent for UK electricians that catches missed calls, texts customers back instantly, and handles enquiries via SMS and WhatsApp until you're free to take over.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3.5 rounded-xl text-base transition-colors shadow-sm"
-              >
-                Start your 14-day free trial
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-surface-50 text-surface-700 font-medium px-6 py-3.5 rounded-xl text-base transition-colors border border-surface-200"
-              >
-                See how it works
-              </a>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-16 sm:pt-24 sm:pb-24">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left column — copy */}
+            <div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-surface-900 tracking-tight leading-[1.1]">
+                Never miss a job&nbsp;again
+              </h1>
+              <p className="mt-6 text-lg sm:text-xl text-surface-600 leading-relaxed max-w-2xl">
+                Can't answer the phone? TradGo texts your customer back within seconds — finds out what they need, gives them a ballpark, and keeps them warm until you're free.
+              </p>
+              <p id="quick-answer" className="sr-only">
+                TradGo is an AI agent for UK electricians that catches missed calls, texts customers back instantly, and handles enquiries via SMS and WhatsApp until you're free to take over.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold px-6 py-3.5 rounded-xl text-base transition-colors shadow-sm"
+                >
+                  Start your 14-day free trial
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center justify-center gap-2 bg-white hover:bg-surface-50 text-surface-700 font-medium px-6 py-3.5 rounded-xl text-base transition-colors border border-surface-200"
+                >
+                  See how it works
+                </a>
+              </div>
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-surface-500">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> 14-day free trial</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Keep your existing number</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Live in 10 minutes</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Cancel anytime</span>
+              </div>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-surface-500">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> 14-day free trial</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Keep your existing number</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Live in 10 minutes</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-brand-500" /> Cancel anytime</span>
+            {/* Right column — phone mockup */}
+            <div className="hidden lg:flex justify-center">
+              <PhoneMockup />
             </div>
           </div>
         </div>
       </section>
 
       {/* SOCIAL PROOF BAR */}
-      <section className="border-y border-surface-100 bg-surface-50/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-wrap items-center justify-center gap-8 text-sm text-surface-500">
-          <span className="text-surface-700 font-medium">Built for UK electricians</span>
+      <section className="bg-surface-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-wrap items-center justify-center gap-8 text-sm text-surface-300">
+          <span className="text-white font-medium">Built for UK electricians</span>
           <span>Missed call text-back</span>
           <span>SMS + WhatsApp</span>
           <span>NICEIC / NAPIT verified</span>
@@ -361,9 +437,9 @@ export default function LandingPage() {
       </section>
 
       {/* PROBLEM / SOLUTION */}
-      <section className="py-16 sm:py-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center mb-12">
+      <section className="bg-gradient-to-b from-surface-50 to-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+          <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
               Every missed call is a job lost
             </h2>
@@ -375,7 +451,7 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES */}
-      <section className="py-16 sm:py-24 bg-surface-50/50">
+      <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
@@ -387,8 +463,8 @@ export default function LandingPage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {FEATURES.map((feature) => (
-              <div key={feature.title} className="bg-white rounded-2xl p-6 sm:p-8 border border-surface-100 hover:border-brand-200 hover:shadow-sm transition-all">
-                <div className="h-10 w-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4">
+              <div key={feature.title} className="bg-surface-50 rounded-2xl p-6 sm:p-8 border border-surface-100 hover:border-brand-200 hover:shadow-sm transition-all">
+                <div className="h-10 w-10 rounded-xl bg-brand-100 flex items-center justify-center mb-4">
                   <feature.icon className="h-5 w-5 text-brand-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-surface-900 mb-2">{feature.title}</h3>
@@ -400,7 +476,7 @@ export default function LandingPage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="py-16 sm:py-24 scroll-mt-20">
+      <section id="how-it-works" className="py-14 sm:py-20 bg-surface-50 scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
@@ -433,7 +509,7 @@ export default function LandingPage() {
       </section>
 
       {/* CLASSIFICATION EXPLAINER */}
-      <section className="py-16 sm:py-24 bg-surface-50/50">
+      <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900 text-center mb-4">
@@ -443,7 +519,7 @@ export default function LandingPage() {
               Every message the agent sends is classified into one of three categories:
             </p>
             <div className="space-y-4">
-              <div className="bg-white rounded-xl p-5 border border-surface-100 flex gap-4 items-start">
+              <div className="bg-green-50 rounded-xl p-5 border border-green-100 flex gap-4 items-start">
                 <div className="shrink-0 h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                 </div>
@@ -452,7 +528,7 @@ export default function LandingPage() {
                   <p className="text-sm text-surface-600 mt-0.5">General info, availability, service area. Things the agent knows for sure. Sent instantly so the customer gets a fast reply.</p>
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-5 border border-surface-100 flex gap-4 items-start">
+              <div className="bg-amber-50 rounded-xl p-5 border border-amber-100 flex gap-4 items-start">
                 <div className="shrink-0 h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
                   <Shield className="h-4 w-4 text-amber-600" />
                 </div>
@@ -461,7 +537,7 @@ export default function LandingPage() {
                   <p className="text-sm text-surface-600 mt-0.5">Estimates, pricing, anything the agent isn't 100% sure about. You see the draft, approve it, edit it, or write your own reply.</p>
                 </div>
               </div>
-              <div className="bg-white rounded-xl p-5 border border-surface-100 flex gap-4 items-start">
+              <div className="bg-red-50 rounded-xl p-5 border border-red-100 flex gap-4 items-start">
                 <div className="shrink-0 h-8 w-8 rounded-lg bg-red-100 flex items-center justify-center">
                   <Zap className="h-4 w-4 text-red-600" />
                 </div>
@@ -476,7 +552,7 @@ export default function LandingPage() {
       </section>
 
       {/* VERIFIED CREDENTIALS */}
-      <section className="py-16 sm:py-24">
+      <section className="py-14 sm:py-20 bg-surface-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
@@ -490,7 +566,7 @@ export default function LandingPage() {
       </section>
 
       {/* THE LEARNING LOOP */}
-      <section className="py-16 sm:py-24 bg-surface-50/50">
+      <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
@@ -504,7 +580,7 @@ export default function LandingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-16 sm:py-24 scroll-mt-20">
+      <section id="pricing" className="py-14 sm:py-20 bg-surface-50 scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-surface-900">
@@ -515,7 +591,7 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="max-w-md mx-auto">
-            <div className="bg-white rounded-2xl border-2 border-brand-600 p-8 sm:p-10 shadow-sm">
+            <div className="bg-white rounded-2xl border-2 border-brand-600 p-8 sm:p-10 shadow-lg">
               <div className="text-center">
                 <h3 className="text-lg font-semibold text-surface-900">TradGo Solo</h3>
                 <div className="mt-4 flex items-baseline justify-center gap-1">
@@ -546,15 +622,15 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-16 sm:py-24 bg-surface-50/50 scroll-mt-20">
+      <section id="faq" className="py-14 sm:py-20 bg-white scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-surface-900 text-center mb-12">
             Questions electricians ask
           </h2>
-          <div className="max-w-3xl mx-auto space-y-6">
+          <div className="max-w-3xl mx-auto space-y-4">
             {(STRUCTURED_DATA['@graph'].find((item) => item['@type'] === 'FAQPage') as { mainEntity: Array<{ name: string; acceptedAnswer: { text: string } }> } | undefined)?.mainEntity.map((faq) => (
-              <details key={faq.name} className="group bg-white rounded-xl border border-surface-100 overflow-hidden">
-                <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-left font-medium text-surface-900 hover:bg-surface-50 transition-colors">
+              <details key={faq.name} className="group bg-surface-50 rounded-xl border border-surface-100 overflow-hidden">
+                <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-left font-medium text-surface-900 hover:bg-surface-100 transition-colors">
                   {faq.name}
                   <span className="ml-4 shrink-0 text-surface-400 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
                 </summary>
@@ -588,20 +664,20 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-surface-100 bg-white">
+      <footer className="border-t border-surface-100 bg-surface-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-brand-600" />
-              <span className="font-bold text-surface-900">TradGo</span>
+              <Zap className="h-5 w-5 text-brand-400" />
+              <span className="font-bold text-white">TradGo</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-surface-500">
-              <Link to="/privacy" className="hover:text-surface-900 transition-colors">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-surface-900 transition-colors">Terms of Service</Link>
-              <Link to="/dashboard" className="hover:text-surface-900 transition-colors">Sign in</Link>
+            <div className="flex items-center gap-6 text-sm text-surface-400">
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link to="/dashboard" className="hover:text-white transition-colors">Sign in</Link>
             </div>
           </div>
-          <p className="mt-6 text-center text-xs text-surface-400">
+          <p className="mt-6 text-center text-xs text-surface-500">
             © {new Date().getFullYear()} TradGo. Built for UK electricians. All rights reserved.
           </p>
         </div>
