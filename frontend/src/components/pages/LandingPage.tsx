@@ -668,21 +668,21 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-surface-100 bg-surface-900">
+     {/* FOOTER */}
+      <footer className="border-t border-surface-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-brand-400" />
-              <span className="font-bold text-white">TradGo</span>
+              <Zap className="h-5 w-5 text-brand-600" />
+              <span className="font-bold text-surface-900">TradGo</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-surface-300">
-              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-              <Link to="/dashboard" className="hover:text-white transition-colors">Sign in</Link>
+            <div className="flex items-center gap-6 text-sm text-surface-500">
+              <Link to="/privacy" className="hover:text-surface-900 transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-surface-900 transition-colors">Terms of Service</Link>
+              <Link to="/dashboard" className="hover:text-surface-900 transition-colors">Sign in</Link>
             </div>
           </div>
-          <p className="mt-6 text-center text-xs text-surface-500">
+          <p className="mt-6 text-center text-xs text-surface-400">
             © {new Date().getFullYear()} TradGo. Built for UK electricians. All rights reserved.
           </p>
         </div>
