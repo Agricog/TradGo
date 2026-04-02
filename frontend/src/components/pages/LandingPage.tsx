@@ -14,7 +14,7 @@ const STRUCTURED_DATA = {
       name: 'TradGo',
       url: 'https://tradgo.co.uk',
       logo: 'https://tradgo.co.uk/favicon.svg',
-      description: 'TradGo gives UK electricians an AI agent that catches missed calls, handles customer enquiries via SMS and WhatsApp, generates estimates, and books site visits automatically.',
+      description: 'TradGo gives UK electricians an AI agent that catches missed calls, texts customers back instantly, and handles enquiries via SMS and WhatsApp — so you never lose a job because you couldn\'t get to the phone.',
       foundingDate: '2026',
       areaServed: { '@type': 'Country', name: 'United Kingdom' },
       sameAs: [],
@@ -24,7 +24,7 @@ const STRUCTURED_DATA = {
       '@id': 'https://tradgo.co.uk/#webpage',
       url: 'https://tradgo.co.uk',
       name: 'TradGo — AI Agent for UK Electricians | Never Miss a Job Again',
-      description: 'TradGo catches missed calls, texts your customer back instantly, and handles the conversation — qualifying the job, giving estimates, and booking visits while you work. £59/month. 14-day free trial.',
+      description: 'TradGo catches missed calls, texts your customer back instantly, and handles the conversation — finding out what they need, giving a ballpark, and keeping them warm until you\'re free. £59/month. 14-day free trial.',
       isPartOf: { '@id': 'https://tradgo.co.uk/#organization' },
       speakable: {
         '@type': 'SpeakableSpecification',
@@ -48,7 +48,7 @@ const STRUCTURED_DATA = {
           description: '14-day free trial. Cancel anytime.',
         },
       },
-      description: 'AI-powered missed call text-back and customer enquiry management for UK electricians. Catches missed calls, handles SMS and WhatsApp messages, provides estimates, and books visits automatically.',
+      description: 'AI-powered missed call text-back and customer enquiry management for UK electricians. Catches missed calls, texts customers back instantly, and handles SMS and WhatsApp conversations so no lead goes cold.',
     },
     {
       '@type': 'FAQPage',
@@ -58,7 +58,7 @@ const STRUCTURED_DATA = {
           name: 'What is TradGo?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'TradGo is an AI agent built specifically for UK electricians. When you miss a call, TradGo texts the customer back within seconds, qualifies the job, gives an estimate, and books a visit — all while you keep working. It also handles WhatsApp messages and website enquiries.',
+            text: 'TradGo is an AI agent built specifically for UK electricians. When you miss a call, TradGo texts the customer back within seconds, finds out what they need, gives them a ballpark, and keeps them warm until you\'re free. It also handles WhatsApp messages and website enquiries.',
           },
         },
         {
@@ -157,7 +157,7 @@ const STRUCTURED_DATA = {
       step: [
         { '@type': 'HowToStep', position: 1, name: 'Sign up', text: 'Create your account and enter your business details, services, and pricing ranges. Takes about 10 minutes.' },
         { '@type': 'HowToStep', position: 2, name: 'Set call forwarding', text: 'Set your phone to forward unanswered calls to your TradGo number. Keep your existing number on everything.' },
-        { '@type': 'HowToStep', position: 3, name: 'Start catching jobs', text: 'Every missed call gets a text back within seconds. The AI agent qualifies, prices, and books — you review everything in your dashboard.' },
+        { '@type': 'HowToStep', position: 3, name: 'Start catching jobs', text: 'Every missed call gets a text back within seconds. The AI agent finds out what they need and keeps them warm. You review everything in your dashboard.' },
       ],
     },
     {
@@ -201,14 +201,14 @@ const FEATURES = [
   {
     icon: BarChart3,
     title: 'See what\'s coming in',
-    description: 'Your dashboard shows every conversation, estimate, and booking in one place. Filter by status, see what needs your attention, and track your pipeline.',
+    description: 'Your dashboard shows every conversation, estimate, and enquiry in one place. Filter by status, see what needs your attention, and track your pipeline.',
   },
 ]
 
 const STEPS = [
   { number: '1', title: 'Sign up and set your services', description: 'Enter your details, the electrical work you do, and your pricing. Takes about 10 minutes.' },
   { number: '2', title: 'Set call forwarding on your phone', description: 'One setting change — forward unanswered calls to your TradGo number. Your existing number stays on your van, your cards, everywhere. Nothing changes.' },
-  { number: '3', title: 'Start catching the jobs you\'re missing', description: 'Every missed call gets a text back within seconds. Your AI agent qualifies the job, gives an estimate, and books a visit. You just approve and show up.' },
+  { number: '3', title: 'Start catching the jobs you\'re missing', description: 'Every missed call gets a text back within seconds. Your AI agent finds out what they need, gives a ballpark, and keeps them warm until you\'re free to take over.' },
 ]
 
 const INCLUDED = [
@@ -242,7 +242,7 @@ export default function LandingPage() {
       el.setAttribute('content', content)
     }
 
-    setMeta('description', 'TradGo catches missed calls, texts your customer back instantly, and handles the conversation — qualifying the job, giving estimates, and booking visits. Built for UK electricians. £59/month. 14-day free trial.')
+    setMeta('description', 'TradGo catches missed calls, texts your customer back instantly, and handles the conversation — finding out what they need and keeping them warm until you\'re free. Built for UK electricians. £59/month. 14-day free trial.')
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement
     if (!canonical) {
       canonical = document.createElement('link')
@@ -252,7 +252,7 @@ export default function LandingPage() {
     canonical.href = 'https://tradgo.co.uk'
     setMeta('og:type', 'website', true)
     setMeta('og:title', 'TradGo — AI Agent for UK Electricians | Never Miss a Job Again', true)
-    setMeta('og:description', 'Missed a call? TradGo texts your customer back in seconds. AI agent handles enquiries, gives estimates, books visits. £59/month.', true)
+    setMeta('og:description', 'Missed a call? TradGo texts your customer back in seconds and handles the conversation until you\'re free. £59/month.', true)
     setMeta('og:url', 'https://tradgo.co.uk', true)
     setMeta('og:image', 'https://tradgo.co.uk/og-image.jpg', true)
     setMeta('twitter:card', 'summary_large_image')
@@ -319,10 +319,10 @@ export default function LandingPage() {
               Never miss a job&nbsp;again
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-surface-600 leading-relaxed max-w-2xl">
-              Can't answer the phone? TradGo texts your customer back within seconds — qualifies the job, gives an estimate, and books a visit. All while you keep working.
+              Can't answer the phone? TradGo texts your customer back within seconds — finds out what they need, gives them a ballpark, and keeps them warm until you're free.
             </p>
             <p id="quick-answer" className="sr-only">
-              TradGo is an AI agent for UK electricians that catches missed calls, texts customers back instantly, handles enquiries via SMS and WhatsApp, and books site visits automatically.
+              TradGo is an AI agent for UK electricians that catches missed calls, texts customers back instantly, and handles enquiries via SMS and WhatsApp until you're free to take over.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
@@ -574,7 +574,7 @@ export default function LandingPage() {
             Stop losing jobs to missed calls
           </h2>
           <p className="mt-4 text-lg text-brand-100 max-w-2xl mx-auto">
-            Set up your AI agent in 10 minutes. Every missed call becomes a conversation. Every conversation becomes a job.
+            Set up your AI agent in 10 minutes. Every missed call becomes a conversation. Every conversation is a chance to win the job.
           </p>
           <Link
             to="/dashboard"
