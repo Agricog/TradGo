@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
+import '@fontsource-variable/inter'
 import { initSentry } from './lib/sentry'
 import App from './App'
 import './index.css'
@@ -9,7 +10,6 @@ import './index.css'
 initSentry()
 
 const rootElement = document.getElementById('root')
-
 if (!rootElement) {
   throw new Error('Root element not found — check index.html has <div id="root"></div>')
 }
