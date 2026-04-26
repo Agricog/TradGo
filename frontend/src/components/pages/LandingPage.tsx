@@ -378,7 +378,7 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
-
+      <main>
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-emerald-50" />
@@ -529,7 +529,7 @@ export default function LandingPage() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-surface-900">Safe — auto-sends</h4>
+                  <h3 className="font-semibold text-surface-900">Safe — auto-sends</h3>
                   <p className="text-sm text-surface-600 mt-0.5">General info, availability, service area. Things the agent knows for sure. Sent instantly so the customer gets a fast reply.</p>
                 </div>
               </div>
@@ -538,7 +538,7 @@ export default function LandingPage() {
                   <Shield className="h-4 w-4 text-amber-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-surface-900">Approval — held for you</h4>
+                  <h3 className="font-semibold text-surface-900">Approval — held for you</h3>
                   <p className="text-sm text-surface-600 mt-0.5">Estimates, pricing, anything the agent isn't 100% sure about. You see the draft, approve it, edit it, or write your own reply.</p>
                 </div>
               </div>
@@ -547,7 +547,7 @@ export default function LandingPage() {
                   <Zap className="h-4 w-4 text-red-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-surface-900">Escalate — flagged urgent</h4>
+                  <h3 className="font-semibold text-surface-900">Escalate — flagged urgent</h3>
                   <p className="text-sm text-surface-600 mt-0.5">Emergencies like burning smells, sparking, or electrical danger. The agent tells the customer to call 999 and contacts you directly.</p>
                 </div>
               </div>
@@ -666,8 +666,8 @@ export default function LandingPage() {
           </Link>
           <p className="mt-4 text-sm text-brand-200">£59/month after trial. No card needed to start. Cancel anytime.</p>
         </div>
-      </section>
-
+     </section>
+      </main>
      {/* FOOTER */}
       <footer className="border-t border-surface-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
