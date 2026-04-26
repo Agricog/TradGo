@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   BrowserRouter,
   Routes,
@@ -16,29 +16,47 @@ import {
 } from '@clerk/clerk-react'
 import { Zap } from 'lucide-react'
 
-import StepYou from './components/onboarding/StepYou'
-import StepServices from './components/onboarding/StepServices'
-import StepPricing from './components/onboarding/StepPricing'
-import StepVoice from './components/onboarding/StepVoice'
-import StepVerify from './components/onboarding/StepVerify'
-import StepGoLive from './components/onboarding/StepGoLive'
-import DashboardLayout from './components/dashboard/DashboardLayout'
-import InboxList from './components/dashboard/inbox/InboxList'
-import ConversationDetail from './components/dashboard/inbox/ConversationDetail'
-import StatsView from './components/dashboard/stats/StatsView'
-import AgentView from './components/dashboard/agent/AgentView'
-import SettingsView from './components/dashboard/settings/SettingsView'
-import AgentPage from './components/agent-page/AgentPage'
+// Eager: landing page is the LCP target — visitors see this first
 import LandingPage from './components/pages/LandingPage'
-import PrivacyPage from './components/pages/PrivacyPage'
-import TermsPage from './components/pages/TermsPage'
+
 import { useApi } from './hooks/useApi'
 import type { MeResponse } from './types'
+
+// Lazy: everything else (onboarding, dashboard, auth-only routes)
+const StepYou = lazy(() => import('./components/onboarding/StepYou'))
+const StepServices = lazy(() => import('./components/onboarding/StepServices'))
+const StepPricing = lazy(() => import('./components/onboarding/StepPricing'))
+const StepVoice = lazy(() => import('./components/onboarding/StepVoice'))
+const StepVerify = lazy(() => import('./components/onboarding/StepVerify'))
+const StepGoLive = lazy(() => import('./components/onboarding/StepGoLive'))
+const DashboardLayout = lazy(() => import('./components/dashboard/DashboardLayout'))
+const InboxList = lazy(() => import('./components/dashboard/inbox/InboxList'))
+const ConversationDetail = lazy(() => import('./components/dashboard/inbox/ConversationDetail'))
+const StatsView = lazy(() => import('./components/dashboard/stats/StatsView'))
+const AgentView = lazy(() => import('./components/dashboard/agent/AgentView'))
+const SettingsView = lazy(() => import('./components/dashboard/settings/SettingsView'))
+const AgentPage = lazy(() => import('./components/agent-page/AgentPage'))
+const PrivacyPage = lazy(() => import('./components/pages/PrivacyPage'))
+const TermsPage = lazy(() => import('./components/pages/TermsPage'))
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('VITE_CLERK_PUBLISHABLE_KEY is required')
+}
+
+// ===========================================
+// Loading fallback (used by Suspense)
+// ===========================================
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface-50">
+      <div className="text-center">
+        <Zap className="h-8 w-8 text-brand-600 mx-auto mb-3 animate-pulse" />
+        <p className="text-sm text-surface-700">Loading...</p>
+      </div>
+    </div>
+  )
 }
 
 // ===========================================
@@ -151,14 +169,7 @@ function AppShell() {
   }, [isLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isLoaded || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-50">
-        <div className="text-center">
-          <Zap className="h-8 w-8 text-brand-600 mx-auto mb-3 animate-pulse" />
-          <p className="text-sm text-surface-700">Loading...</p>
-        </div>
-      </div>
-    )
+    return <LoadingFallback />
   }
 
   return (
@@ -191,16 +202,18 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <BrowserRouter>
-        <Routes>
-          {/* Public pages — no auth required */}
-          <Route path="/" element={<PublicOrDashboard />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/agent/:slug" element={<AgentPage />} />
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            {/* Public pages — no auth required */}
+            <Route path="/" element={<PublicOrDashboard />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/agent/:slug" element={<AgentPage />} />
 
-          {/* Everything else goes through auth */}
-          <Route path="*" element={<AuthGate />} />
-        </Routes>
+            {/* Everything else goes through auth */}
+            <Route path="*" element={<AuthGate />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </ClerkProvider>
   )
